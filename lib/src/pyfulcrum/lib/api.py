@@ -6,6 +6,11 @@ from sqlalchemy.engine import Engine, create_engine
 
 
 class ApiManager(object):
+    """
+    This is entry point class for accessing PyFulcrum data.
+    It handles db connection and Fulcrum API credentials
+    (to be implemented), which should be provided by caller code.
+    """
     def __init__(self, db):
         if isinstance(db, Engine):
             self.db = db
