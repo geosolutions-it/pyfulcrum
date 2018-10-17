@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .models import *
+from .models import Session, Base, Project
 from sqlalchemy.engine import Engine, create_engine
 
 
@@ -20,8 +20,6 @@ class ApiManager(object):
         self.session.add(p)
         self.session.flush()
         return p
-        
 
     def get_projects(self):
         return self.session.query(Project).all()
-    

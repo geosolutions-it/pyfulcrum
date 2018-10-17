@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Numeric, ForeignKey, JSON, Enum
+from sqlalchemy import (Column, Integer, String,
+                        DateTime, Numeric, ForeignKey,
+                        JSON, Enum)
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
 from sqlalchemy.orm.session import sessionmaker
@@ -17,9 +20,17 @@ Base = declarative_base(metadata=md)
 
 class BaseResource(object):
     id = Column(Integer, primary_key=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
-    fetched_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True),
+                        nullable=False,
+                        server_default=func.now())
+    updated_at = Column(DateTime(timezone=True),
+                        nullable=False,
+                        server_default=func.now(),
+                        onupdate=func.now())
+    fetched_at = Column(DateTime(timezone=True),
+                        nullable=True,
+                        server_default=func.now(),
+                        onupdate=func.now())
     payload = Column(JSON, nullable=True)
 
 
@@ -34,7 +45,11 @@ class Form(BaseResource, Base):
     name = Column(String)
     description = Column(String(1024))
     fields = Column(JSON, nullable=False)
-    
+
+
+# list of available field types from api docs
+# see https://developer.fulcrumapp.com/endpoints/\
+# forms/#form-element-properties-all-field-types
 FIELD_TYPES = ("TextField", "YesNoField", "Label",
                "Section", "ChoiceField", "ClassificationField",
                "PhotoField", "VideoField", "AudioField",
@@ -52,12 +67,14 @@ class Field(BaseResource, Base):
     name = Column(String, nullable=False)
     type = Column(FieldTypeEnum, nullable=False)
     form = relationship(Form, backref="fields_list")
-   
+
 
 class Record(BaseResource, Base):
     __tablename__ = 'fulcrum_record'
     form_id = Column(Integer, ForeignKey('fulcrum_form.id'), nullable=False)
-    project_id = Column(Integer, ForeignKey('fulcrum_project.id'), nullable=True)
+    project_id = Column(Integer,
+                        ForeignKey('fulcrum_project.id'),
+                        nullable=True)
     point = Column(Geometry('POINT'), nullable=True)
     altitude = Column(Integer, nullable=True)
     speed = Column(Numeric, nullable=True)
@@ -73,8 +90,12 @@ class Record(BaseResource, Base):
 
 class Value(BaseResource):
     __tablename__ = 'fulcrum_value'
-    field_id = Column(Integer, ForeignKey('fulcrum_field.id'), nullable=False)
-    record_id = Column(Integer, ForeignKey('fulcrum_record.id'), nullable=False)
+    field_id = Column(Integer,
+                      ForeignKey('fulcrum_field.id'),
+                      nullable=False)
+    record_id = Column(Integer,
+                       ForeignKey('fulcrum_record.id'),
+                       nullable=False)
     value = Column(String, nullable=False, default='')
     type = Column(FieldTypeEnum, nullable=False)
     metadata = Column(JSON, nullable=False)
@@ -94,7 +115,9 @@ class Media(BaseResource, Base):
     updated_by = Column(String, nullable=True)
     bbox = Column(Geometry('POLYGON'), nullable=True)
     field_id = Column(Integer, ForeignKey('fulcrum_field.id'), nullable=False)
-    record_id = Column(Integer, ForeignKey('fulcrum_record.id'), nullable=False)
+    record_id = Column(Integer,
+                       ForeignKey('fulcrum_record.id'),
+                       nullable=False)
     form_id = Column(Integer, ForeignKey('fulcrum_form.id'), nullable=False)
     file_size = Column(Integer, nullable=False)
     url = Column(String, nullable=False)
@@ -103,4 +126,6 @@ class Media(BaseResource, Base):
     media_type = Column(Enum(*MEDIA_TYPES, name='media_types'), nullable=False)
     storage = Column(String, nullable=False)
 
-__all__ = ['Media', 'Value', 'Record', 'Field', 'Project', 'Form', 'Base', 'Session']
+
+__all__ = ['Media', 'Value', 'Record', 'Field',
+           'Project', 'Form', 'Base', 'Session']
