@@ -9,6 +9,9 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
+def mpath(path_in):
+    return os.path.join(*path_in.split('/'))
+
 setup(
     name="PyFulcrum-lib",
     version="0.0.1",
@@ -22,12 +25,16 @@ setup(
     setup_requires=['pytest-runner'],
     tests_requires=['pytest'],
     test_packages=['pyfulcrum.lib.tests'],
-    package_dir={'pyfulcrum': os.path.join(*('src/pyfulcrum/').split('/')),
-                 'pyfulcrum.lib': os.path.join(*('src/pyfulcrum/lib')
-                                               .split('/')),
-                 'pyfulcrum.lib.tests':
-                 os.path.join(*('src/pyfulcrum/lib/tests').split('/')),
+    package_dir={'pyfulcrum': mpath('src/pyfulcrum/'),
+                 'pyfulcrum.lib': mpath('src/pyfulcrum/lib'),
+                 'pyfulcrum.lib.migrations': mpath('src/pyfulcrum/lib/migrations'),
+                 'pyfulcrum.lib.migrations.versions': mpath('src/pyfulcrum/lib/migrations/versions'),
+                 'pyfulcrum.lib.tests': mpath('src/pyfulcrum/lib/tests'),
                  '': 'src'},
+    package_data={'pyfulcrum.lib.migrations': ['src/pyfulcrum/lib/migrations/env',
+                                               'src/pyfulcrum/lib/migrations/README',
+                                               'src/pyfulcrum/lib/migrations/script.py.mako',
+                                                ]
     long_description=read('README'),
     classifiers=[
              "Development Status :: 3 - Alpha",
