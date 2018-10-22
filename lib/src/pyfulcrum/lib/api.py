@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .models import Session, Base, Project, Form, Record, Media
+from .models import Session, Base, Project, Form, Record, Media, Field
 from sqlalchemy.engine import Engine, create_engine
 
 
@@ -15,25 +15,32 @@ class BaseObjectManager(object):
     path = None
     model = None
 
+    @classmethod
+    def get_name(cls):
+        return cls.path or cls.__name__[:-len('manager')].lower()
+
+
     def __init__(self, session, client):
         self.session = session
         self.client = client
         self._handler = self._get_handler()
 
     def _get_handler(self):
+        if self.path is None:
+            return
         h = getattr(self.client, self.path, None)
         if h is None:
             raise ValueError("invalid object path: {}".format(self.path))
         return h
 
     def get(self, obj_id, cached=True):
-        if not cached:
+        if self.path and not cached:
             data = self._handler.find(obj_id)
             out = self.model.from_payload(data, self.session)
         return self.model.get(obj_id, session=self.session)
 
     def list(self, cached=True, *args, **kwargs):
-        if not cached:
+        if self.path and not cached:
             items = self._handler.search(*args, **kwargs)
             for i in items:
                 self.get(i['id'], cached=False)
@@ -46,6 +53,15 @@ class ProjectManager(BaseObjectManager):
 class FormManager(BaseObjectManager):
     path = 'forms'
     model = Form
+
+class FieldsManager(BaseObjectManager):
+    """
+    This is special case of Resource Manager.
+    Field is not reachable in Fulcrum API, but
+    we'll have manager for convenience.
+    """
+    path = None
+    model = Field
 
 class RecordManager(BaseObjectManager):
     path = 'records'
@@ -74,6 +90,7 @@ class ApiManager(object):
 
     MANAGERS = (ProjectManager,
                 FormManager,
+                FieldsManager,
                 RecordManager,
                 PictureManager,
                 VideoManager,
@@ -110,6 +127,6 @@ class ApiManager(object):
 
     def initialize(self):
         for el_cls in self.MANAGERS:
-            el_name = el_cls.path
+            el_name = el_cls.get_name()
             el_inst = el_cls(self.session, self.client)
             setattr(self, el_name, el_inst)

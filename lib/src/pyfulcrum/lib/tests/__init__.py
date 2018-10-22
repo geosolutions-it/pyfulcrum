@@ -43,7 +43,8 @@ def get_connection():
 
 
 RESOURCES = ['projects', 'forms', 'records',
-             'audio', 'videos', 'pictures']
+             'audio', 'videos', 'pictures',
+             'fields',]
 
 
 def mocked_fulcrum_client():

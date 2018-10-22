@@ -175,6 +175,8 @@ class Field(BaseResource, Base):
         # cleanup payload for saving
         payload.pop('form_id', None)
         payload.pop('id', None)
+        payload.pop('created_at', None)
+        payload.pop('updated_at', None)
 
 
 class Record(BaseResource, Base):

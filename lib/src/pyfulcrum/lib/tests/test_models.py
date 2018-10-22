@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
+import json
 from . import BaseTestCase
 
 
@@ -21,4 +21,30 @@ class ModelsTestCase(BaseTestCase):
 
         self.assertEqual(len(self.api_manager.forms.list()), 0)
         self.assertEqual(len(self.api_manager.forms.list(cached=False)), 1)
+
+
+        FIELD_PAYLOAD = json.loads("""
+                        {"type": "TextField",
+                         "key": "2832",
+                         "label": "ID Tag",
+                         "description": "Enter the asset tag ID",
+                         "required": false,
+                         "disabled": false,
+                         "hidden": false,
+                         "data_name": "id_tag",
+                         "default_value": null,
+                         "visible_conditions_type": null,
+                         "visible_conditions": null,
+                         "required_conditions_type": null,
+                         "required_conditions": null,
+                         "numeric": false,
+                         "pattern": null,
+                         "pattern_description": null,
+                         "min_length": null,
+                         "max_length": null
+                        }""")
+        field = self.api_manager.fields.get('2832')
+        self.assertIsNotNone(field)
+        self.assertEqual(field.description, FIELD_PAYLOAD['description'])
+        self.assertEqual(field.payload, FIELD_PAYLOAD)
 
