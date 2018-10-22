@@ -3,3 +3,4 @@ psycopg2
 GeoAlchemy2
 pytest
 alembic
+fulcrum

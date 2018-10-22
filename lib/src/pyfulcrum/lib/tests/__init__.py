@@ -3,8 +3,9 @@
 
 import os
 import sys
+import json
 
-from unittest import TestCase
+from unittest import TestCase, mock
 from sqlalchemy import create_engine
 
 from ..api import ApiManager
@@ -41,11 +42,55 @@ def get_connection():
     return create_engine(conn_uri)
 
 
+RESOURCES = ['projects', 'forms', 'records',
+             'audio', 'videos', 'pictures']
+
+
+def mocked_fulcrum_client():
+    m = mock.Mock(spec=RESOURCES)
+    return m
+
+MOCK_DATA_DIR = os.path.join(os.path.dirname(__file__),
+                             '..', '..', '..', '..',
+                             'examples', 'api')
+
+class MockedResource(object):
+
+    def __init__(self, name):
+        self.name = name
+
+    def _get_resource(self, method, obj_id=None):
+        args = [self.name, method]
+        if obj_id is not None:
+            args.append(obj_id)
+        path = os.path.abspath(os.path.join(MOCK_DATA_DIR, '{}.json'.format('_'.join(args))))
+        with open(path, 'rt') as f:
+            return json.load(f)
+        
+    def find(self, obj_id):
+        return self._get_resource('find', obj_id)
+
+    def search(self):
+        return self._get_resource('search')
+        
+
+class MockedFulcrumClient(object):
+    
+    def __init__(self, *args, **kwargs):
+        self.init_resources()
+
+    def init_resources(self):
+        for res_name in RESOURCES:
+            res = MockedResource(res_name)
+            setattr(self, res_name, res)
+
+
 class BaseTestCase(TestCase):
 
     def setUp(self):
         self._conn = get_connection()
-        self.api_manager = ApiManager(self._conn)
+        self._client = MockedFulcrumClient()
+        self.api_manager = ApiManager(self._conn, self._client)
         Base.metadata.create_all()
 
     def tearDown(self):
