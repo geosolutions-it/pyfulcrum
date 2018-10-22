@@ -17,4 +17,8 @@ class ModelsTestCase(BaseTestCase):
         projects = self.api_manager.get_projects()
         self.assertEqual(len(projects), 2, projects)
 
+    def test_forms(self):
+
+        self.assertEqual(len(self.api_manager.forms.list()), 0)
+        self.assertEqual(len(self.api_manager.forms.list(cached=False)), 1)
 

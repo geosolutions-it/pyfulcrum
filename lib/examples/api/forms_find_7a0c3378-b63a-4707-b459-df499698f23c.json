@@ -1,0 +1,198 @@
+{
+  "form": {
+    "name": "Fire Hydrant Inventory",
+    "description": "Inventory of fire hydrant structures.",
+    "bounding_box": [27.7644875, -87.9042981472685, 42.8251769, -73.8936123],
+    "record_title_key": "8373",
+    "title_field_keys": ["8373", "2832"],
+    "status_field": {
+      "type": "StatusField",
+      "label": "Color",
+      "key": "@status",
+      "data_name": "color",
+      "default_value": "Unknown",
+      "enabled": true,
+      "read_only": false,
+      "hidden": false,
+      "description": "",
+      "choices": [{
+        "label": "Unknown",
+        "value": "Unknown",
+        "color": "#B3B3B3"
+      },
+      {
+        "label": "Blue",
+        "value": "Blue",
+        "color": "#1891C9"
+      },
+      {
+        "label": "Green",
+        "value": "Green",
+        "color": "#87D30F"
+      },
+      {
+        "label": "Orange",
+        "value": "Orange",
+        "color": "#FF8819"
+      },
+      {
+        "label": "Red",
+        "value": "Red",
+        "color": "#CB0D0C"
+      },
+      {
+        "label": "White",
+        "value": "White",
+        "color": "#FFFFFF"
+      },
+      {
+        "label": "Yellow",
+        "value": "Yellow",
+        "color": "#FFD300"
+      }],
+      "required": false,
+      "disabled": false
+    },
+    "auto_assign": false,
+    "record_count": 97,
+    "id": "7a0c3378-b63a-4707-b459-df499698f23c",
+    "created_at": "2015-04-16T13:20:10Z",
+    "updated_at": "2015-04-29T19:57:21Z",
+    "image": "https://fulcrumapp.s3.amazonaws.com/form-images/7a0c3378-b63a-4707-b459-df499698f23c-0fe97096-fac5-41ec-81a6-b961b9ed9b24.png",
+    "image_thumbnail": "https://fulcrumapp.s3.amazonaws.com/form-images/thumb_7a0c3378-b63a-4707-b459-df499698f23c-0fe97096-fac5-41ec-81a6-b961b9ed9b24.png",
+    "image_small": "https://fulcrumapp.s3.amazonaws.com/form-images/small_7a0c3378-b63a-4707-b459-df499698f23c-0fe97096-fac5-41ec-81a6-b961b9ed9b24.png",
+    "image_large": "https://fulcrumapp.s3.amazonaws.com/form-images/large_7a0c3378-b63a-4707-b459-df499698f23c-0fe97096-fac5-41ec-81a6-b961b9ed9b24.png",
+    "elements": [{
+      "type": "TextField",
+      "key": "2832",
+      "label": "ID Tag",
+      "description": "Enter the asset tag ID",
+      "required": false,
+      "disabled": false,
+      "hidden": false,
+      "data_name": "id_tag",
+      "default_value": null,
+      "visible_conditions_type": null,
+      "visible_conditions": null,
+      "required_conditions_type": null,
+      "required_conditions": null,
+      "numeric": false,
+      "pattern": null,
+      "pattern_description": null,
+      "min_length": null,
+      "max_length": null
+    },
+    {
+      "type": "ChoiceField",
+      "key": "8373",
+      "label": "Hydrant Type",
+      "description": "What style of hydrant is it?",
+      "required": false,
+      "disabled": false,
+      "hidden": false,
+      "data_name": "hydrant_type",
+      "default_value": null,
+      "visible_conditions_type": null,
+      "visible_conditions": null,
+      "required_conditions_type": null,
+      "required_conditions": null,
+      "multiple": false,
+      "allow_other": false,
+      "choices": [{
+        "label": "Pillar",
+        "value": "Pillar"
+      },
+      {
+        "label": "Pond",
+        "value": "Pond"
+      },
+      {
+        "label": "Standpipe",
+        "value": "Standpipe"
+      },
+      {
+        "label": "Underground",
+        "value": "Underground"
+      },
+      {
+        "label": "Wall",
+        "value": "Wall"
+      }]
+    },
+    {
+      "type": "ChoiceField",
+      "key": "11f8",
+      "label": "Position",
+      "description": "Where is the hydrant installed?",
+      "required": false,
+      "disabled": false,
+      "hidden": false,
+      "data_name": "position",
+      "default_value": null,
+      "visible_conditions_type": null,
+      "visible_conditions": null,
+      "required_conditions_type": null,
+      "required_conditions": null,
+      "multiple": false,
+      "allow_other": false,
+      "choices": [{
+        "label": "Building",
+        "value": "Building"
+      },
+      {
+        "label": "Green Space",
+        "value": "Green Space"
+      },
+      {
+        "label": "Lane",
+        "value": "Lane"
+      },
+      {
+        "label": "Parking Lot",
+        "value": "Parking Lot"
+      },
+      {
+        "label": "Sidewalk",
+        "value": "Sidewalk"
+      }]
+    },
+    {
+      "type": "TextField",
+      "key": "57c9",
+      "label": "Diameter",
+      "description": null,
+      "required": false,
+      "disabled": false,
+      "hidden": false,
+      "data_name": "diameter",
+      "default_value": null,
+      "visible_conditions_type": null,
+      "visible_conditions": null,
+      "required_conditions_type": null,
+      "required_conditions": null,
+      "numeric": true,
+      "format": "decimal",
+      "min": null,
+      "max": null,
+      "min_length": null,
+      "max_length": null
+    },
+    {
+      "type": "PhotoField",
+      "key": "193f",
+      "label": "Photo",
+      "description": null,
+      "required": false,
+      "disabled": false,
+      "hidden": false,
+      "data_name": "photo",
+      "default_value": null,
+      "visible_conditions_type": null,
+      "visible_conditions": null,
+      "required_conditions_type": null,
+      "required_conditions": null,
+      "min_length": null,
+      "max_length": null
+    }]
+  }
+}

@@ -37,7 +37,7 @@ class BaseObjectManager(object):
             items = self._handler.search(*args, **kwargs)
             for i in items:
                 self.get(i['id'], cached=False)
-        return self.session.query(Project).all()
+        return self.session.query(self.model).all()
 
 class ProjectManager(BaseObjectManager):
     path = 'projects'

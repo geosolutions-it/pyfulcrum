@@ -1,8 +1,8 @@
-"""empty message
+"""init
 
-Revision ID: 9b5b1216cab8
+Revision ID: 12d0f52a6567
 Revises: 
-Create Date: 2018-10-22 11:46:20.355100
+Create Date: 2018-10-22 21:20:49.171140
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import geoalchemy2
 
 
 # revision identifiers, used by Alembic.
-revision = '9b5b1216cab8'
+revision = '12d0f52a6567'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -47,7 +47,12 @@ def upgrade():
     sa.Column('fetched_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('payload', sa.JSON(), nullable=True),
     sa.Column('form_id', sa.String(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('label', sa.String(), nullable=False),
+    sa.Column('data_name', sa.String(), nullable=False),
+    sa.Column('description', sa.String(), nullable=True),
+    sa.Column('required', sa.Boolean(), nullable=False),
+    sa.Column('disabled', sa.Boolean(), nullable=False),
+    sa.Column('hidden', sa.Boolean(), nullable=False),
     sa.Column('type', sa.Enum('TextField', 'YesNoField', 'Label', 'Section', 'ChoiceField', 'ClassificationField', 'PhotoField', 'VideoField', 'AudioField', 'BarcodeField', 'DateTimeField', 'TimeField', 'Repeatable', 'AddressField', 'SignatureField', 'HyperlinkField', 'CalculatedField', 'RecordLinkField', name='field_types'), nullable=False),
     sa.ForeignKeyConstraint(['form_id'], ['fulcrum_form.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -111,7 +116,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['record_id'], ['fulcrum_record.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    # op.drop_table('spatial_ref_sys')
     # ### end Alembic commands ###
 
 
