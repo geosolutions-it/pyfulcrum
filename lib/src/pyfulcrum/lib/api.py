@@ -5,11 +5,10 @@ from .models import Session, Base, Project, Form, Record, Media, Field
 from sqlalchemy.engine import Engine, create_engine
 
 
-
 class BaseObjectManager(object):
     """
-    Base class for API object managers. Base class 
-    connects fulcrum api objects and db models. Subclass 
+    Base class for API object managers. Base class
+    connects fulcrum api objects and db models. Subclass
     will handle object-specific variations of handler.
     """
     path = None
@@ -18,7 +17,6 @@ class BaseObjectManager(object):
     @classmethod
     def get_name(cls):
         return cls.path or cls.__name__[:-len('manager')].lower()
-
 
     def __init__(self, session, client):
         self.session = session
@@ -36,7 +34,7 @@ class BaseObjectManager(object):
     def get(self, obj_id, cached=True):
         if self.path and not cached:
             data = self._handler.find(obj_id)
-            out = self.model.from_payload(data, self.session)
+            return self.model.from_payload(data, self.session)
         return self.model.get(obj_id, session=self.session)
 
     def list(self, cached=True, *args, **kwargs):
@@ -46,13 +44,16 @@ class BaseObjectManager(object):
                 self.get(i['id'], cached=False)
         return self.session.query(self.model).all()
 
+
 class ProjectManager(BaseObjectManager):
     path = 'projects'
     model = Project
 
+
 class FormManager(BaseObjectManager):
     path = 'forms'
     model = Form
+
 
 class FieldsManager(BaseObjectManager):
     """
@@ -63,6 +64,7 @@ class FieldsManager(BaseObjectManager):
     path = None
     model = Field
 
+
 class RecordManager(BaseObjectManager):
     path = 'records'
     models = Record
@@ -72,9 +74,11 @@ class VideoManager(BaseObjectManager):
     path = 'videos'
     models = Media
 
+
 class PictureManager(BaseObjectManager):
     path = 'pictures'
     models = Media
+
 
 class AudioManager(BaseObjectManager):
     path = 'audio'

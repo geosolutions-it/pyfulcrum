@@ -22,7 +22,6 @@ class ModelsTestCase(BaseTestCase):
         self.assertEqual(len(self.api_manager.forms.list()), 0)
         self.assertEqual(len(self.api_manager.forms.list(cached=False)), 1)
 
-
         FIELD_PAYLOAD = json.loads("""
                         {"type": "TextField",
                          "key": "2832",
@@ -47,4 +46,3 @@ class ModelsTestCase(BaseTestCase):
         self.assertIsNotNone(field)
         self.assertEqual(field.description, FIELD_PAYLOAD['description'])
         self.assertEqual(field.payload, FIELD_PAYLOAD)
-

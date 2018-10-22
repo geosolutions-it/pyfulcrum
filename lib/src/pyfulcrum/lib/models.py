@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from datetime import datetime, date
+from datetime import datetime
 from sqlalchemy import (Column, Integer, String,
                         DateTime, Numeric, ForeignKey,
                         JSON, Enum, Boolean)
@@ -32,7 +32,7 @@ class BaseResource(object):
     # with source, dest names, i.e. ('id', 'media_key',))
     MAPPED_COLUMNS = ('id', 'created_at', 'updated_at',)
 
-    # judging from example values this is probably uuid, 
+    # judging from example values this is probably uuid,
     # but api schema says string
     # also, in media resources it's media_key
     id = Column(String, primary_key=True)
@@ -58,12 +58,11 @@ class BaseResource(object):
     @classmethod
     def get(cls, id, session=None):
         s = session or Session()
-        return s.query(cls).filter(cls.id==id).first()
+        return s.query(cls).filter(cls.id == id).first()
 
     @classmethod
     def _post_payload(cls, instance, payload, session):
         pass
-
 
     @classmethod
     def _pre_payload(cls, payload, session):
@@ -75,22 +74,22 @@ class BaseResource(object):
 
         # hook for preprocessing class-specific payload
         payload = cls._pre_payload(payload, s)
-        
+
         id = payload['id']
         existing = cls.get(id, session=s)
         if not existing:
             existing = cls(id=id)
         for m in cls.MAPPED_COLUMNS:
-            if isinstance(m, (list,tuple,)):
+            if isinstance(m, (list, tuple,)):
                 msrc, mdest = m
             else:
                 msrc = mdest = m
             setattr(existing, mdest, payload[msrc])
-        
+
         # hook for subclasses
         # also, should clean payload
         cls._post_payload(existing, payload, s)
-       
+
         existing.payload = payload
         s.add(existing)
         s.flush()
@@ -101,19 +100,21 @@ class Project(BaseResource, Base):
     __tablename__ = 'fulcrum_project'
     name = Column(String)
     description = Column(String(1024))
-    MAPPED_COLUMNS = BaseResource.MAPPED_COLUMNS + ('name','description',)
+    MAPPED_COLUMNS = BaseResource.MAPPED_COLUMNS + ('name', 'description',)
 
     @classmethod
     def _pre_payload(cls, payload, session):
         return payload['project']
+
 
 class Form(BaseResource, Base):
     __tablename__ = 'fulcrum_form'
     name = Column(String)
     description = Column(String(1024))
     fields = Column(JSON, nullable=False)
-    MAPPED_COLUMNS = BaseResource.MAPPED_COLUMNS +\
+    MAPPED_COLUMNS = (BaseResource.MAPPED_COLUMNS +
                       ('name', 'description', ('elements', 'fields',),)
+                      )
 
     @classmethod
     def _pre_payload(cls, payload, session):
@@ -130,8 +131,9 @@ class Form(BaseResource, Base):
         for f in payload['elements']:
             f['form_id'] = instance.id
             f['id'] = f['key']
-            field = Field.from_payload(f, session=session)
+            Field.from_payload(f, session=session)
         return
+
 
 # list of available field types from api docs
 # see https://developer.fulcrumapp.com/endpoints/\
@@ -158,17 +160,17 @@ class Field(BaseResource, Base):
     hidden = Column(Boolean, nullable=False)
     type = Column(FieldTypeEnum, nullable=False)
     form = relationship(Form, backref="fields_list")
-    MAPPED_COLUMNS = BaseResource.MAPPED_COLUMNS +\
+    MAPPED_COLUMNS = (BaseResource.MAPPED_COLUMNS +
                       ('label', 'data_name', 'description',
                        'required', 'disabled', 'hidden',
                        'type', 'form_id',)
-
+                      )
 
     @classmethod
     def _pre_payload(cls, payload, session):
-        payload['created_at'] = payload['updated_at'] = datetime.utcnow().strftime(DATE_FORMAT)
+        payload['created_at'] = payload['updated_at'] =\
+         datetime.utcnow().strftime(DATE_FORMAT)
         return payload
-
 
     @classmethod
     def _post_payload(cls, instance, payload, session):

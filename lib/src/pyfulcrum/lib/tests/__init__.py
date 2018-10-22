@@ -44,16 +44,18 @@ def get_connection():
 
 RESOURCES = ['projects', 'forms', 'records',
              'audio', 'videos', 'pictures',
-             'fields',]
+             'fields', ]
 
 
 def mocked_fulcrum_client():
     m = mock.Mock(spec=RESOURCES)
     return m
 
+
 MOCK_DATA_DIR = os.path.join(os.path.dirname(__file__),
                              '..', '..', '..', '..',
                              'examples', 'api')
+
 
 class MockedResource(object):
 
@@ -64,19 +66,20 @@ class MockedResource(object):
         args = [self.name, method]
         if obj_id is not None:
             args.append(obj_id)
-        path = os.path.abspath(os.path.join(MOCK_DATA_DIR, '{}.json'.format('_'.join(args))))
+        path = os.path.abspath(os.path.join(MOCK_DATA_DIR,
+                               '{}.json'.format('_'.join(args))))
         with open(path, 'rt') as f:
             return json.load(f)
-        
+
     def find(self, obj_id):
         return self._get_resource('find', obj_id)
 
     def search(self):
         return self._get_resource('search')
-        
+
 
 class MockedFulcrumClient(object):
-    
+
     def __init__(self, *args, **kwargs):
         self.init_resources()
 
