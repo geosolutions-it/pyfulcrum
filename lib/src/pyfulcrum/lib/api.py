@@ -3,6 +3,7 @@
 
 from .models import Session, Base, Project, Form, Record, Media, Field
 from sqlalchemy.engine import Engine, create_engine
+from .storage import Storage
 
 
 class BaseObjectManager(object):
@@ -18,9 +19,10 @@ class BaseObjectManager(object):
     def get_name(cls):
         return cls.path or cls.__name__[:-len('manager')].lower()
 
-    def __init__(self, session, client):
+    def __init__(self, session, client, storage):
         self.session = session
         self.client = client
+        self.storage = storage
         self._handler = self._get_handler()
 
     def _get_handler(self):
@@ -34,7 +36,7 @@ class BaseObjectManager(object):
     def get(self, obj_id, cached=True):
         if self.path and not cached:
             data = self._handler.find(obj_id)
-            return self.model.from_payload(data, self.session)
+            return self.model.from_payload(data, self.session, self.client, self.storage)
         return self.model.get(obj_id, session=self.session)
 
     def list(self, cached=True, *args, **kwargs):
@@ -67,7 +69,7 @@ class FieldsManager(BaseObjectManager):
 
 class RecordManager(BaseObjectManager):
     path = 'records'
-    models = Record
+    model = Record
 
 
 class VideoManager(BaseObjectManager):
@@ -101,7 +103,7 @@ class ApiManager(object):
                 AudioManager,
                 )
 
-    def __init__(self, db, client):
+    def __init__(self, db, client, storage_cfg):
         if isinstance(db, Engine):
             self.db = db
         else:
@@ -110,7 +112,8 @@ class ApiManager(object):
         self.session = Session()
         Base.metadata.bind = db
         self.client = client
-        self.initialize()
+        self.initialize_storage(storage_cfg)
+        self.initialize_managers()
 
     def create_project(self, id, name, description):
         p = Project(id=id, name=name, description=description)
@@ -129,8 +132,19 @@ class ApiManager(object):
     def get_projects_cached(self):
         return self.session.query(Project).all()
 
-    def initialize(self):
+    def initialize_managers(self):
         for el_cls in self.MANAGERS:
             el_name = el_cls.get_name()
-            el_inst = el_cls(self.session, self.client)
+            el_inst = el_cls(self.session, self.client, self.storage)
             setattr(self, el_name, el_inst)
+
+    def initialize_storage(self, cfg):
+        if isinstance(cfg, Storage):
+            self.storage = cfg
+            return
+        if not isinstance(cfg, dict):
+            raise TypeError("Storage configuration should be a dictionary")
+        storage_cfg = {}
+        storage_cfg['root_dir'] = str(cfg['root_dir'])
+        storage_cfg['url_base'] = cfg.get('url_base')
+        self.storage = Storage(**storage_cfg)

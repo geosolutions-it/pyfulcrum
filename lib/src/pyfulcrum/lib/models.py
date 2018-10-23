@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import json
 from datetime import datetime
 from sqlalchemy import (Column, Integer, String,
                         DateTime, Numeric, ForeignKey,
@@ -22,7 +23,7 @@ Base = declarative_base(metadata=md)
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
-class BaseResource(object):
+class BaseResource(Base):
     """
     Base class for data objects. This contains common tables
     and methods.
@@ -31,6 +32,8 @@ class BaseResource(object):
     # names are euqal. alternatively you can provide tuple
     # with source, dest names, i.e. ('id', 'media_key',))
     MAPPED_COLUMNS = ('id', 'created_at', 'updated_at',)
+
+    __abstract__ = True
 
     # judging from example values this is probably uuid,
     # but api schema says string
@@ -61,19 +64,19 @@ class BaseResource(object):
         return s.query(cls).filter(cls.id == id).first()
 
     @classmethod
-    def _post_payload(cls, instance, payload, session):
+    def _post_payload(cls, instance, payload, session, client, storage):
         pass
 
     @classmethod
-    def _pre_payload(cls, payload, session):
+    def _pre_payload(cls, payload, session, client, storage):
         return payload
 
     @classmethod
-    def from_payload(cls, payload, session=None):
-        s = session or Session()
+    def from_payload(cls, payload, session, client, storage):
+        s = session
 
         # hook for preprocessing class-specific payload
-        payload = cls._pre_payload(payload, s)
+        payload = cls._pre_payload(payload, s, client, storage)
 
         id = payload['id']
         existing = cls.get(id, session=s)
@@ -88,7 +91,7 @@ class BaseResource(object):
 
         # hook for subclasses
         # also, should clean payload
-        cls._post_payload(existing, payload, s)
+        cls._post_payload(existing, payload, s, client, storage)
 
         existing.payload = payload
         s.add(existing)
@@ -96,20 +99,20 @@ class BaseResource(object):
         return existing
 
 
-class Project(BaseResource, Base):
+class Project(BaseResource):
     __tablename__ = 'fulcrum_project'
-    name = Column(String)
+    name = Column(String, index=True)
     description = Column(String(1024))
     MAPPED_COLUMNS = BaseResource.MAPPED_COLUMNS + ('name', 'description',)
 
     @classmethod
-    def _pre_payload(cls, payload, session):
+    def _pre_payload(cls, payload, session, client, storage):
         return payload['project']
 
 
-class Form(BaseResource, Base):
+class Form(BaseResource):
     __tablename__ = 'fulcrum_form'
-    name = Column(String)
+    name = Column(String, index=True)
     description = Column(String(1024))
     fields = Column(JSON, nullable=False)
     MAPPED_COLUMNS = (BaseResource.MAPPED_COLUMNS +
@@ -117,13 +120,13 @@ class Form(BaseResource, Base):
                       )
 
     @classmethod
-    def _pre_payload(cls, payload, session):
+    def _pre_payload(cls, payload, session, client, storage):
         form_f = payload['form']
 
         return form_f
 
     @classmethod
-    def _post_payload(cls, instance, payload, session):
+    def _post_payload(cls, instance, payload, session, client, storage):
         # here we should process fields
         # but first, we need to add this form to db
         session.add(instance)
@@ -131,7 +134,7 @@ class Form(BaseResource, Base):
         for f in payload['elements']:
             f['form_id'] = instance.id
             f['id'] = f['key']
-            Field.from_payload(f, session=session)
+            Field.from_payload(f, session, client, storage)
         return
 
 
@@ -149,11 +152,11 @@ FIELD_TYPES = ("TextField", "YesNoField", "Label",
 FieldTypeEnum = Enum(*FIELD_TYPES, name='field_types')
 
 
-class Field(BaseResource, Base):
+class Field(BaseResource):
     __tablename__ = 'fulcrum_field'
     form_id = Column(String, ForeignKey('fulcrum_form.id'), nullable=False)
-    label = Column(String, nullable=False)
-    data_name = Column(String, nullable=False)
+    label = Column(String, nullable=False, index=True)
+    data_name = Column(String, nullable=False, index=True)
     description = Column(String)
     required = Column(Boolean, nullable=False)
     disabled = Column(Boolean, nullable=False)
@@ -167,13 +170,13 @@ class Field(BaseResource, Base):
                       )
 
     @classmethod
-    def _pre_payload(cls, payload, session):
+    def _pre_payload(cls, payload, session, client, storage):
         payload['created_at'] = payload['updated_at'] =\
          datetime.utcnow().strftime(DATE_FORMAT)
         return payload
 
     @classmethod
-    def _post_payload(cls, instance, payload, session):
+    def _post_payload(cls, instance, payload, session, client, storage):
         # cleanup payload for saving
         payload.pop('form_id', None)
         payload.pop('id', None)
@@ -181,41 +184,98 @@ class Field(BaseResource, Base):
         payload.pop('updated_at', None)
 
 
-class Record(BaseResource, Base):
+class Record(BaseResource):
     __tablename__ = 'fulcrum_record'
     form_id = Column(String, ForeignKey('fulcrum_form.id'), nullable=False)
     project_id = Column(String,
                         ForeignKey('fulcrum_project.id'),
                         nullable=True)
-    point = Column(Geometry('POINT'), nullable=True)
+    point = Column(Geometry('POINT'), nullable=True, index=True)
     altitude = Column(Integer, nullable=True)
     speed = Column(Numeric, nullable=True)
     course = Column(Numeric, nullable=True)
     values = Column(JSON, nullable=True)
-    status = Column(String, nullable=True)
+    status = Column(String, nullable=True, index=True)
     created_by = Column(String, nullable=False)
     updated_by = Column(String, nullable=True)
-    assigned_by = Column(String, nullable=True)
+    assigned_to = Column(String, nullable=True)
     form = relationship(Form, backref="records")
     project = relationship(Project, backref="records")
 
+    MAPPED_COLUMNS = (BaseResource.MAPPED_COLUMNS +
+                      ('form_id', 'project_id', 'point',
+                       'altitude', 'speed', 'course',
+                       'values', 'status', 'created_by',
+                       'updated_by', 'assigned_to',)
+                      )
+    @classmethod
+    def _pre_payload(cls, payload, session, client, storage):
+        f = payload['record']
+        point = None
+        if f.get('latitude') and f.get('longitude'):
+            point = 'POINT({latitude} {longitude})'.format(latitude=f['latitude'],
+                                                           longitude=f['longitude'])
+        f['point'] = point
+        f['values'] = f['form_values']
+        return f
 
-class Value(BaseResource, Base):
+    @classmethod
+    def _post_payload(cls, instance, payload, session, client, storage):
+        session.add(instance)
+        session.flush()
+
+        for field_id, field_value in payload['form_values'].items():
+            fdef = Field.get(field_id, session=session)
+            if fdef is None:
+                raise ValueError("There's no field definition for id {}".format(field_id))
+            f = {}
+            f['type'] = fdef.type
+            f['record_id'] = instance.id
+            f['value'] = json.dumps(field_value)
+            f['meta'] = {'key': field_id,
+                         'value': field_value}
+            f['field_id'] = field_id
+            f['created_at'] = instance.created_at
+            f['updated_at'] = instance.updated_at
+            f['id'] = '{}_{}'.format(instance.id, field_id)
+            Value.from_payload(f, session, client, storage)
+            
+       # cleanup payload for saving
+        payload.pop('point', None)
+        payload.pop('values', None)
+
+
+class Value(BaseResource):
     __tablename__ = 'fulcrum_value'
+
     field_id = Column(String,
                       ForeignKey('fulcrum_field.id'),
                       nullable=False)
     record_id = Column(String,
                        ForeignKey('fulcrum_record.id'),
                        nullable=False)
-    value = Column(String, nullable=False, default='')
-    type = Column(FieldTypeEnum, nullable=False)
+    # value can be any type (dict, list, number, string..)
+    value = Column(JSON, nullable=False, default='')
+    type = Column(FieldTypeEnum, nullable=False, index=True)
     meta = Column(JSON, nullable=False)
     field = relationship(Field, backref='values_list')
     record = relationship(Record, backref='values_list')
 
 
-class Media(BaseResource, Base):
+    MAPPED_COLUMNS = (BaseResource.MAPPED_COLUMNS +
+                      ('field_id', 'record_id',
+                       'value', 'meta', 'type',))
+
+    @classmethod
+    def _post_payload(cls, instance, payload, session, client, storage):
+        pkeys = payload.keys()
+        for k in list(pkeys):
+            if k == 'meta':
+                continue
+            payload.pop(k)
+
+
+class Media(BaseResource):
     MEDIA_PHOTO = 'photo'
     MEDIA_AUDIO = 'audio'
     MEDIA_VIDEO = 'video'
@@ -233,10 +293,9 @@ class Media(BaseResource, Base):
                        nullable=False)
     form_id = Column(String, ForeignKey('fulcrum_form.id'), nullable=False)
     file_size = Column(Integer, nullable=False)
-    url = Column(String, nullable=False)
     content_type = Column(String, nullable=False)
     track = Column(Geometry('LINESTRING'), nullable=True)
-    media_type = Column(Enum(*MEDIA_TYPES, name='media_types'), nullable=False)
+    media_type = Column(Enum(*MEDIA_TYPES, name='media_types'), nullable=False, index=True)
     storage = Column(String, nullable=False)
 
 

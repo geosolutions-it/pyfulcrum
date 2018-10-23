@@ -46,3 +46,14 @@ class ModelsTestCase(BaseTestCase):
         self.assertIsNotNone(field)
         self.assertEqual(field.description, FIELD_PAYLOAD['description'])
         self.assertEqual(field.payload, FIELD_PAYLOAD)
+        
+        form = self.api_manager.forms.get("7a0c3378-b63a-4707-b459-df499698f23c")
+        self.assertEqual(len(form.fields_list),5) 
+        self.assertEqual(len(form.fields),5) 
+
+    def test_records(self):
+        forms = self.api_manager.forms.list(cached=False)
+        self.assertEqual(len(self.api_manager.records.list()), 0)
+        self.assertEqual(len(self.api_manager.records.list(cached=False)), 1)
+
+

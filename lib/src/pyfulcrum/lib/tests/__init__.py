@@ -10,10 +10,12 @@ from sqlalchemy import create_engine
 
 from ..api import ApiManager
 from ..models import Base
+from ..storage import Storage
 
 
 SQLALCHEMY_ENV = 'TEST_DATABASE_URI'
 SQLALCHEMY_CLI = '--test-database-uri'
+STORAGE_ENV = 'TEST_STORAGE_ROOT'
 
 
 def conn_from_env():
@@ -41,6 +43,12 @@ def get_connection():
                          )
     return create_engine(conn_uri)
 
+def get_storage():
+    root_dir = os.getenv(STORAGE_ENV) or\
+                os.path.join(os.path.dirname(__file__),
+                             '..', '..', '..', '..',
+                             'examples', 'tests')
+    return Storage(root_dir=root_dir)
 
 RESOURCES = ['projects', 'forms', 'records',
              'audio', 'videos', 'pictures',
@@ -94,7 +102,8 @@ class BaseTestCase(TestCase):
     def setUp(self):
         self._conn = get_connection()
         self._client = MockedFulcrumClient()
-        self.api_manager = ApiManager(self._conn, self._client)
+        self._storage = get_storage()
+        self.api_manager = ApiManager(self._conn, self._client, self._storage)
         Base.metadata.create_all()
 
     def tearDown(self):
