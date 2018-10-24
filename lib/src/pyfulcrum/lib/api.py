@@ -36,14 +36,31 @@ class BaseObjectManager(object):
     def get(self, obj_id, cached=True):
         if self.path and not cached:
             data = self._handler.find(obj_id)
+            # single objects are in envelope: singular path name
+            # {'form': {..}}
+            p = self.path
+            if p.endswith('s'):
+                p = p[:-1]
+            if isinstance(data.get(p), dict):
+                data = data[p]
             return self.model.from_payload(data, self.session, self.client, self.storage)
         return self.model.get(obj_id, session=self.session)
 
-    def list(self, cached=True, *args, **kwargs):
+    def list(self, cached=True, generator=False, *args, **kwargs):
+
         if self.path and not cached:
-            items = self._handler.search(*args, **kwargs)
-            for i in items:
-                self.get(i['id'], cached=False)
+            def gen():
+                items = self._handler.search(*args, **kwargs)[self.path]
+                for i in items:
+                    if list(i.keys()) == ['id']:
+                        v = self.get(i['id'], cached=False)
+                        yield v
+                    else:
+                        yield self.model.from_payload(i, self.session, self.client, self.storage)
+            if generator:
+                return gen()
+            else:
+                list(gen())
         return self.session.query(self.model).all()
 
 
@@ -77,8 +94,8 @@ class VideoManager(BaseObjectManager):
     models = Media
 
 
-class PictureManager(BaseObjectManager):
-    path = 'pictures'
+class PhotoManager(BaseObjectManager):
+    path = 'photos'
     models = Media
 
 
@@ -98,7 +115,7 @@ class ApiManager(object):
                 FormManager,
                 FieldsManager,
                 RecordManager,
-                PictureManager,
+                PhotoManager,
                 VideoManager,
                 AudioManager,
                 )
@@ -108,12 +125,15 @@ class ApiManager(object):
             self.db = db
         else:
             self.db = create_engine(db)
-        Session.configure(bind=db)
+        Session.configure(bind=self.db)
         self.session = Session()
         Base.metadata.bind = db
         self.client = client
         self.initialize_storage(storage_cfg)
         self.initialize_managers()
+
+    def close(self):
+        self.session.commit()
 
     def create_project(self, id, name, description):
         p = Project(id=id, name=name, description=description)
@@ -131,6 +151,16 @@ class ApiManager(object):
 
     def get_projects_cached(self):
         return self.session.query(Project).all()
+
+    @property
+    def manager_names(self):
+        out = []
+        for el_cls in self.MANAGERS:
+            out.append(el_cls.get_name())
+        return out
+
+    def get_manager(self, mgr_name):
+        return getattr(self, mgr_name)
 
     def initialize_managers(self):
         for el_cls in self.MANAGERS:

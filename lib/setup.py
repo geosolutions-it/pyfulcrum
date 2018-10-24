@@ -34,11 +34,16 @@ setup(
     package_data={'pyfulcrum.lib.migrations': ['src/pyfulcrum/lib/migrations/env',
                                                'src/pyfulcrum/lib/migrations/README',
                                                'src/pyfulcrum/lib/migrations/script.py.mako',
-                                                ]
+                                                ],
+                 },
     long_description=read('README'),
     classifiers=[
              "Development Status :: 3 - Alpha",
              "Topic :: Utilities",
              "License :: OSI Approved :: BSD License",
     ],
+    entry_points = {'console_scripts': [
+                    'pyfulcrum = pyfulcrum.lib.cli:main'
+                    ]
+                    },
 )

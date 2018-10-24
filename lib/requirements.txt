@@ -4,3 +4,4 @@ GeoAlchemy2
 pytest
 alembic
 fulcrum
+cliff

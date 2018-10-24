@@ -105,10 +105,6 @@ class Project(BaseResource):
     description = Column(String(1024))
     MAPPED_COLUMNS = BaseResource.MAPPED_COLUMNS + ('name', 'description',)
 
-    @classmethod
-    def _pre_payload(cls, payload, session, client, storage):
-        return payload['project']
-
 
 class Form(BaseResource):
     __tablename__ = 'fulcrum_form'
@@ -118,12 +114,6 @@ class Form(BaseResource):
     MAPPED_COLUMNS = (BaseResource.MAPPED_COLUMNS +
                       ('name', 'description', ('elements', 'fields',),)
                       )
-
-    @classmethod
-    def _pre_payload(cls, payload, session, client, storage):
-        form_f = payload['form']
-
-        return form_f
 
     @classmethod
     def _post_payload(cls, instance, payload, session, client, storage):
@@ -210,7 +200,7 @@ class Record(BaseResource):
                       )
     @classmethod
     def _pre_payload(cls, payload, session, client, storage):
-        f = payload['record']
+        f = payload
         point = None
         if f.get('latitude') and f.get('longitude'):
             point = 'POINT({latitude} {longitude})'.format(latitude=f['latitude'],
@@ -298,6 +288,10 @@ class Media(BaseResource):
     media_type = Column(Enum(*MEDIA_TYPES, name='media_types'), nullable=False, index=True)
     storage = Column(String, nullable=False)
 
+    @classmethod
+    def _post_payload(cls, instance, payload, session, client, storage):
+        # handle storage
+        pass
 
 __all__ = ['Media', 'Value', 'Record', 'Field',
            'Project', 'Form', 'Base', 'Session']

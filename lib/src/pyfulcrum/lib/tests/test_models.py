@@ -12,15 +12,22 @@ class ModelsTestCase(BaseTestCase):
                                             description='test proj')
         self.assertIsNotNone(p)
         self.assertEqual(len(self.api_manager.get_projects()), 1)
-        self.assertEqual(len(self.api_manager.projects.list()), 1)
-        self.assertEqual(len(self.api_manager.projects.list(cached=False)), 2)
+        self.assertEqual(len(list(self.api_manager.projects.list())), 1)
+        projects = self.api_manager.projects.list(cached=False)
+        self.assertEqual(len(list(projects)), 2)
+
+        # generator flag will return iterable which will return live resutls only
+        # ommiting ones from db
+        projects = self.api_manager.projects.list(cached=False, generator=True)
+        self.assertEqual(len(list(projects)), 1)
+
         projects = self.api_manager.get_projects()
         self.assertEqual(len(projects), 2, projects)
 
     def test_forms(self):
 
-        self.assertEqual(len(self.api_manager.forms.list()), 0)
-        self.assertEqual(len(self.api_manager.forms.list(cached=False)), 1)
+        self.assertEqual(len(list(self.api_manager.forms.list())), 0)
+        self.assertEqual(len(list(self.api_manager.forms.list(cached=False))), 1)
 
         FIELD_PAYLOAD = json.loads("""
                         {"type": "TextField",
@@ -53,7 +60,5 @@ class ModelsTestCase(BaseTestCase):
 
     def test_records(self):
         forms = self.api_manager.forms.list(cached=False)
-        self.assertEqual(len(self.api_manager.records.list()), 0)
-        self.assertEqual(len(self.api_manager.records.list(cached=False)), 1)
-
-
+        self.assertEqual(len(list(self.api_manager.records.list())), 0)
+        self.assertEqual(len(list(self.api_manager.records.list(cached=False))), 1)

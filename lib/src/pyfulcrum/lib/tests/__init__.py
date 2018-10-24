@@ -51,7 +51,7 @@ def get_storage():
     return Storage(root_dir=root_dir)
 
 RESOURCES = ['projects', 'forms', 'records',
-             'audio', 'videos', 'pictures',
+             'audio', 'videos', 'photos',
              'fields', ]
 
 
@@ -85,6 +85,8 @@ class MockedResource(object):
     def search(self):
         return self._get_resource('search')
 
+    def media(self, id, size):
+        return self._get_file(id, size)
 
 class MockedFulcrumClient(object):
 
