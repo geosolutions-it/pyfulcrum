@@ -43,12 +43,12 @@ def get_connection():
                          )
     return create_engine(conn_uri)
 
-def get_storage():
+def get_storage(**kwargs):
     root_dir = os.getenv(STORAGE_ENV) or\
                 os.path.join(os.path.dirname(__file__),
                              '..', '..', '..', '..',
                              'examples', 'tests')
-    return Storage(root_dir=root_dir)
+    return Storage(root_dir=root_dir, **kwargs)
 
 RESOURCES = ['projects', 'forms', 'records',
              'audio', 'videos', 'photos',
@@ -82,7 +82,7 @@ class MockedResource(object):
     def find(self, obj_id):
         return self._get_resource('find', obj_id)
 
-    def search(self):
+    def search(self, *args, **kwargs):
         return self._get_resource('search')
 
     def media(self, id, size):

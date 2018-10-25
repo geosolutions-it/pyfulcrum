@@ -312,7 +312,6 @@ class Media(BaseResource):
     @classmethod
     def _pre_payload(cls, payload, session, client, storage):
         f = payload
-        print(f)
         f['id'] = f['access_key']
         point = None
         if f.get('latitude') and f.get('longitude'):
