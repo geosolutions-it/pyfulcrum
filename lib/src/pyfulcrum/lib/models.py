@@ -14,6 +14,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 from geoalchemy2 import Geometry
 
+from urllib.request import urlopen
+
 md = MetaData()
 Session = sessionmaker()
 
@@ -276,8 +278,7 @@ class Media(BaseResource):
     # access_key = Column(String, nullable=False, unique=True)
     created_by = Column(String, nullable=False)
     updated_by = Column(String, nullable=True)
-    bbox = Column(Geometry('POLYGON'), nullable=True)
-    field_id = Column(String, ForeignKey('fulcrum_field.id'), nullable=False)
+    point = Column(Geometry('POINT'), nullable=True)
     record_id = Column(String,
                        ForeignKey('fulcrum_record.id'),
                        nullable=False)
@@ -286,12 +287,83 @@ class Media(BaseResource):
     content_type = Column(String, nullable=False)
     track = Column(Geometry('LINESTRING'), nullable=True)
     media_type = Column(Enum(*MEDIA_TYPES, name='media_types'), nullable=False, index=True)
-    storage = Column(String, nullable=False)
+
+    MAPPED_COLUMNS = (BaseResource.MAPPED_COLUMNS +
+                      ('created_by', 'updated_by', 'point',
+                       'record_id', 'form_id',
+                       'file_size', 'content_type',
+                       'media_type'))
+
+    SIZES_PHOTO = ('large', 'thumbnail', 'original',)
+    SIZES_VIDEO = ('thumbnail_small', 'thumbnail_medium',
+                   'thumbnail_large', 'thumbnail_huge',
+                   'thumbnail_small_square',
+                   'thumbnail_medium_square',
+                   'thumbnail_large_square',
+                   'thumbnail_huge_square',
+                   'small', 'medium',
+                   'original',)
+    SIZES_AUDIO = ('track',)
+    SIZES_ALL = tuple(set(SIZES_PHOTO + SIZES_VIDEO + SIZES_AUDIO))
+    SIZES = {'photo': SIZES_PHOTO,
+             'audio': SIZES_AUDIO,
+             'video': SIZES_VIDEO}
+
+    @classmethod
+    def _pre_payload(cls, payload, session, client, storage):
+        f = payload
+        print(f)
+        f['id'] = f['access_key']
+        point = None
+        if f.get('latitude') and f.get('longitude'):
+            point = 'POINT({latitude} {longitude})'.format(latitude=f['latitude'],
+                                                           longitude=f['longitude'])
+        f['point'] = point
+        return payload
+
+    def get_path(self, storage, size):
+        return storage.get_path(self.form_id,
+                                self.record_id,
+                                self.media_type,
+                                size)
+
+    def get_common_path(self, storage, size):
+        return storage.get_common_path(self.form_id,
+                                       self.record_id,
+                                       self.media_type,
+                                       size)
+
+    def get_url(self, storage, size):
+        return storage.get_url(self.form_id,
+                               self.record_id,
+                               self.media_type,
+                               size)
+
+    def get_paths(self, storage):
+        out = {}
+        for s in self.SIZES[self.media_type]:
+            out[s] = {'path': self.get_path(storage, s),
+                      'url': self.get_url(storage, s)}
+        return out
+
+    def save_to_storage(self, storage, fhandle, size):
+        storage.save(fhandle, self.form_id, self.record_id, self.media_type, size)
 
     @classmethod
     def _post_payload(cls, instance, payload, session, client, storage):
         # handle storage
-        pass
+
+        media_type = payload['media_type']
+        sizes = cls.SIZES[media_type]
+        for s in sizes:
+            media_url = payload.get(s)
+            if media_url is None:
+                continue
+            u = urlopen(media_url)
+            instance.save_to_storage(storage, u, s)
+
+        return payload
+
 
 __all__ = ['Media', 'Value', 'Record', 'Field',
            'Project', 'Form', 'Base', 'Session']

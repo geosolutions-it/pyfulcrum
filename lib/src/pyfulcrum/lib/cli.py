@@ -52,25 +52,40 @@ class List(Command):
         if value not in allowed_values:
             raise ValueError("Value {} not in allowed resource names".format(value))
         return value
-        
+    
+    @staticmethod
+    def is_urlparam(value):
+        if len(value.split('=')) == 2:
+            return value.split('=')
+        raise ValueError("Cannot use {} as url arg".format(value))
+
+
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument('resource',
                             type=self.is_allowed_resource,
                             nargs=1,
                             help="Name of resource to list (projects, forms, records, values, media)")
-
+        parser.add_argument('--urlparams',
+                            type=self.is_urlparam,
+                            required=False,
+                            nargs='+',
+                            help="list of name=value pairs of url params to pass to list")
         parser.add_argument('--cached',
                             dest='cached',
                             action='store_true',
                             default=False,
+                            required=False,
                             help="Should app fetch data from live API")
         return parser
 
     def take_action(self, parsed_args):
         api = self.app.api_manager
         mgr = api.get_manager(parsed_args.resource[0])
-        items = mgr.list(cached=parsed_args.cached, generator=True)
+        url_params = {}
+        for un, uv in (parsed_args.urlparams or []):
+            url_params[un] = uv
+        items = mgr.list(cached=parsed_args.cached, generator=True, url_params=url_params)
         for item in items:
             print(item)
         api.close()

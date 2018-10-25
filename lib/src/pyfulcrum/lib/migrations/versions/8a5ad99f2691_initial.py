@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: f9d4f64f6cef
+Revision ID: 8a5ad99f2691
 Revises: 
-Create Date: 2018-10-23 18:56:49.012824
+Create Date: 2018-10-25 11:19:43.859506
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import geoalchemy2
 
 
 # revision identifiers, used by Alembic.
-revision = 'f9d4f64f6cef'
+revision = '8a5ad99f2691'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -92,27 +92,24 @@ def upgrade():
     sa.Column('payload', sa.JSON(), nullable=True),
     sa.Column('created_by', sa.String(), nullable=False),
     sa.Column('updated_by', sa.String(), nullable=True),
-    sa.Column('bbox', geoalchemy2.types.Geometry(geometry_type='POLYGON'), nullable=True),
-    sa.Column('field_id', sa.String(), nullable=False),
+    sa.Column('point', geoalchemy2.types.Geometry(geometry_type='POINT'), nullable=True),
     sa.Column('record_id', sa.String(), nullable=False),
     sa.Column('form_id', sa.String(), nullable=False),
     sa.Column('file_size', sa.Integer(), nullable=False),
     sa.Column('content_type', sa.String(), nullable=False),
     sa.Column('track', geoalchemy2.types.Geometry(geometry_type='LINESTRING'), nullable=True),
     sa.Column('media_type', sa.Enum('photo', 'audio', 'video', name='media_types'), nullable=False),
-    sa.Column('storage', sa.String(), nullable=False),
-    sa.ForeignKeyConstraint(['field_id'], ['fulcrum_field.id'], ),
     sa.ForeignKeyConstraint(['form_id'], ['fulcrum_form.id'], ),
     sa.ForeignKeyConstraint(['record_id'], ['fulcrum_record.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_fulcrum_media_media_type'), 'fulcrum_media', ['media_type'], unique=False)
     op.create_table('fulcrum_value',
+    sa.Column('id', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('fetched_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('payload', sa.JSON(), nullable=True),
-    sa.Column('id', sa.String(), nullable=False),
     sa.Column('field_id', sa.String(), nullable=False),
     sa.Column('record_id', sa.String(), nullable=False),
     sa.Column('value', sa.JSON(), nullable=False),
