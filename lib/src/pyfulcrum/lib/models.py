@@ -271,7 +271,8 @@ class Media(BaseResource):
     MEDIA_PHOTO = 'photo'
     MEDIA_AUDIO = 'audio'
     MEDIA_VIDEO = 'video'
-    MEDIA_TYPES = (MEDIA_PHOTO, MEDIA_AUDIO, MEDIA_VIDEO,)
+    MEDIA_SIGNATURE = 'signature'
+    MEDIA_TYPES = (MEDIA_PHOTO, MEDIA_AUDIO, MEDIA_VIDEO, MEDIA_SIGNATURE,)
     KEY_COLUMN = 'access_key'
 
     __tablename__ = 'fulcrum_media'
@@ -295,6 +296,7 @@ class Media(BaseResource):
                        'media_type'))
 
     SIZES_PHOTO = ('large', 'thumbnail', 'original',)
+    SIZES_SIGNATURE = SIZES_PHOTO
     SIZES_VIDEO = ('thumbnail_small', 'thumbnail_medium',
                    'thumbnail_large', 'thumbnail_huge',
                    'thumbnail_small_square',
@@ -304,9 +306,10 @@ class Media(BaseResource):
                    'small', 'medium',
                    'original',)
     SIZES_AUDIO = ('track',)
-    SIZES_ALL = tuple(set(SIZES_PHOTO + SIZES_VIDEO + SIZES_AUDIO))
+    SIZES_ALL = tuple(set(SIZES_PHOTO + SIZES_SIGNATURE + SIZES_VIDEO + SIZES_AUDIO))
     SIZES = {'photo': SIZES_PHOTO,
              'audio': SIZES_AUDIO,
+             'signature': SIZES_SIGNATURE,
              'video': SIZES_VIDEO}
 
     @classmethod

@@ -9,7 +9,7 @@ from unittest import TestCase, mock
 from sqlalchemy import create_engine
 
 from ..api import ApiManager
-from ..models import Base
+from ..models import Base, Media
 from ..storage import Storage
 
 
@@ -50,9 +50,9 @@ def get_storage(**kwargs):
                              'examples', 'tests')
     return Storage(root_dir=root_dir, **kwargs)
 
-RESOURCES = ['projects', 'forms', 'records',
+RESOURCES = ('projects', 'forms', 'records',
              'audio', 'videos', 'photos',
-             'fields', ]
+             'fields', 'signatures',)
 
 
 def mocked_fulcrum_client():
@@ -63,9 +63,13 @@ def mocked_fulcrum_client():
 MOCK_DATA_DIR = os.path.join(os.path.dirname(__file__),
                              '..', '..', '..', '..',
                              'examples', 'api')
-
+STATIC_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                              '..', '..', '..', '..',
+                              'examples', 'api', 'static.file'))
 
 class MockedResource(object):
+
+    MEDIA_RESOURCES = ('audio', 'photo', 'video', 'signature',)
 
     def __init__(self, name):
         self.name = name
@@ -77,7 +81,20 @@ class MockedResource(object):
         path = os.path.abspath(os.path.join(MOCK_DATA_DIR,
                                '{}.json'.format('_'.join(args))))
         with open(path, 'rt') as f:
-            return json.load(f)
+            data = json.load(f)
+            mname = self.name.rstrip('s')
+            # for media resources we need to adjust paths to files
+            # so they can be fetched with urllib
+            if mname in self.MEDIA_RESOURCES and obj_id is not None:
+                sizes = Media.SIZES[mname]
+                for s in sizes:
+                    data[mname][s] = 'file:///{}'.format(STATIC_FILE)
+            return data
+
+
+    def _get_file(self, file_id, size):
+        s = StringIO('file: {}, size: {}'.format(file_id, size))
+        return s
 
     def find(self, obj_id):
         return self._get_resource('find', obj_id)

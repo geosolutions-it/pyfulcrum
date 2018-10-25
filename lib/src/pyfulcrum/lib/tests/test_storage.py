@@ -23,7 +23,6 @@ class StorageTestCase(TestCase):
         self.assertTrue(local_path.endswith('form_id/record_id/test_normal'), local_path)
         self.assertIsNone(url_path)
 
-
     def test_storage_url(self):
         # test is media_type
         # normal is media size

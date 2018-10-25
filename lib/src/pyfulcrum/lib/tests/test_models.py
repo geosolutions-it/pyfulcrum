@@ -62,3 +62,13 @@ class ModelsTestCase(BaseTestCase):
         forms = self.api_manager.forms.list(cached=False)
         self.assertEqual(len(list(self.api_manager.records.list())), 0)
         self.assertEqual(len(list(self.api_manager.records.list(cached=False))), 1)
+
+    def test_media(self):
+        self.assertEqual(len(list(self.api_manager.forms.list(cached=False))), 1)
+        self.assertEqual(len(list(self.api_manager.records.list(cached=False))), 1)
+        self.assertEqual(len(list(self.api_manager.photos.list(cached=False))), 1)
+        photo = self.api_manager.photos.list()[0]
+        
+        photo_links = photo.get_paths(self.api_manager.storage)
+        expected = ('large', 'thumbnail', 'original',)
+        self.assertEqual(set(expected), set(photo_links.keys()))

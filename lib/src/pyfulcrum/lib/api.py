@@ -149,6 +149,13 @@ class AudioManager(BaseObjectManager):
     identity_key = 'access_key'
 
 
+class SignatureManager(BaseObjectManager):
+    path = 'signatures'
+    model = Media
+    default_item_args = {'media_type': 'signature'}
+    identity_key = 'access_key'
+
+
 class ApiManager(object):
     """
     This is entry point class for accessing PyFulcrum data.
@@ -163,6 +170,7 @@ class ApiManager(object):
                 PhotoManager,
                 VideoManager,
                 AudioManager,
+                SignatureManager,
                 )
 
     def __init__(self, db, client, storage_cfg):
@@ -223,3 +231,4 @@ class ApiManager(object):
         storage_cfg['root_dir'] = str(cfg['root_dir'])
         storage_cfg['url_base'] = cfg.get('url_base')
         self.storage = Storage(**storage_cfg)
+        return self.storage
