@@ -31,7 +31,6 @@ class Storage(object):
     def save(self, fh, form_id, record_id, media_type, size):
         path = self.get_path(form_id, record_id, media_type, size)
         self.initialize_storage(os.path.dirname(path))
-
         with open(path, 'wb') as f:
             f.write(fh.read())
         return path

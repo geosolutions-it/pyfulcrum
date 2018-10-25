@@ -14,6 +14,19 @@ from fulcrum import Fulcrum
 from .api import Storage, ApiManager
 
 
+print_attrs = ('id', 'description', 'name',)
+
+
+def print_item(obj):
+    c = obj.__class__.__name__
+    out = [c]
+    for pattr in print_attrs:
+        vattr = getattr(obj, pattr, None)
+        if vattr is not None:
+            out.append(vattr)
+    print('{}: {}'.format(out[0], ' '.join(out[1:])))
+
+
 class PyFulcrumApp(App):
     
     description = "PyFulcrum access from cli"
@@ -45,6 +58,7 @@ class PyFulcrumApp(App):
 
         self.api_manager = ApiManager(opts.dburl[0], client, {'root_dir': opts.storage[0]})
 
+
 class List(Command):
 
     def is_allowed_resource(self, value):
@@ -71,6 +85,12 @@ class List(Command):
                             required=False,
                             nargs='+',
                             help="list of name=value pairs of url params to pass to list")
+        parser.add_argument('--ignore-existing',
+                            dest='ignore_existing',
+                            action='store_true',
+                            default=False,
+                            required=False,
+                            help="Should app fetch only data that are not in local database")
         parser.add_argument('--cached',
                             dest='cached',
                             action='store_true',
@@ -85,10 +105,14 @@ class List(Command):
         url_params = {}
         for un, uv in (parsed_args.urlparams or []):
             url_params[un] = uv
-        items = mgr.list(cached=parsed_args.cached, generator=True, url_params=url_params)
+        items = mgr.list(cached=parsed_args.cached,
+                         generator=True,
+                         ignore_existing=parsed_args.ignore_existing,
+                         url_params=url_params)
         for item in items:
-            print(item)
-        api.close()
+            print_item(item)
+            if not parsed_args.cached:
+                api.flush()
         
 
 class Get(Command):
@@ -123,8 +147,8 @@ class Get(Command):
         mgr = api.get_manager(parsed_args.resource[0])
         obj_id = parsed_args.id[0]
         item = mgr.get(obj_id, cached=parsed_args.cached)
-        print(item)
-        api.close()
+        print_item(item)
+        api.flush()
 
 
 def main():

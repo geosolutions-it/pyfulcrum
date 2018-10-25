@@ -185,7 +185,7 @@ class ApiManager(object):
         self.initialize_storage(storage_cfg)
         self.initialize_managers()
 
-    def close(self):
+    def flush(self):
         self.session.commit()
 
     def create_project(self, id, name, description):
