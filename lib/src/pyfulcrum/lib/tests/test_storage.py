@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import json
-from six.moves import StringIO
+from io import BytesIO
 from unittest import TestCase
 from . import get_storage
 from ..storage import Storage
@@ -31,3 +31,10 @@ class StorageTestCase(TestCase):
         self.assertTrue(url_path.endswith('form_id/record_id/test_normal'), url_path)
         self.assertTrue(url_path.startswith('http://local/'))
 
+    def test_storage_save(self):
+        f = BytesIO(b'ffff')
+        self.storage_local.save(f, 'form_id', 'record_id', 'test', 'normal')
+        local_path = self.storage_local.get_path('form_id', 'record_id', 'test', 'normal')
+        f.seek(0)
+        with open(local_path, 'rt') as fin:
+            self.assertEqual(f.read().decode('utf-8'), fin.read())
