@@ -13,20 +13,6 @@ from cliff.show import ShowOne
 from fulcrum import Fulcrum
 from .api import Storage, ApiManager
 
-
-print_attrs = ('id', 'description', 'name',)
-
-
-def print_item(obj):
-    c = obj.__class__.__name__
-    out = [c]
-    for pattr in print_attrs:
-        vattr = getattr(obj, pattr, None)
-        if vattr is not None:
-            out.append(vattr)
-    print('{}: {}'.format(out[0], ' '.join(out[1:])))
-
-
 class PyFulcrumApp(App):
     
     description = "PyFulcrum access from cli"
@@ -42,6 +28,8 @@ class PyFulcrumApp(App):
         parser.add_argument('--dburl', type=str, nargs=1, required=True, help="database connection url")
         parser.add_argument('--apikey', type=str, nargs=1, required=True, help="Fulcrum API key")
         parser.add_argument('--storage', type=str, nargs=1, required=True, help="Storage directory root")
+        parser.add_argument('--format', type=str, nargs=1, required=False, default=('json',),
+                            help="Return format (default: json)")
         return parser
 
 
@@ -59,20 +47,19 @@ class PyFulcrumApp(App):
         self.api_manager = ApiManager(opts.dburl[0], client, {'root_dir': opts.storage[0]})
 
 
-class List(Command):
+class _BaseCommand(Command):
 
     def is_allowed_resource(self, value):
         allowed_values = self.app.api_manager.manager_names
         if value not in allowed_values:
             raise ValueError("Value {} not in allowed resource names".format(value))
         return value
-    
+
     @staticmethod
     def is_urlparam(value):
         if len(value.split('=')) == 2:
             return value.split('=')
         raise ValueError("Cannot use {} as url arg".format(value))
-
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
@@ -80,6 +67,19 @@ class List(Command):
                             type=self.is_allowed_resource,
                             nargs=1,
                             help="Name of resource to list (projects, forms, records, values, media)")
+        parser.add_argument('--cached',
+                            dest='cached',
+                            action='store_true',
+                            default=False,
+                            required=False,
+                            help="Should app fetch data from live API")
+        return parser
+
+
+class List(_BaseCommand):
+
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
         parser.add_argument('--urlparams',
                             type=self.is_urlparam,
                             required=False,
@@ -91,64 +91,57 @@ class List(Command):
                             default=False,
                             required=False,
                             help="Should app fetch only data that are not in local database")
-        parser.add_argument('--cached',
-                            dest='cached',
-                            action='store_true',
-                            default=False,
-                            required=False,
-                            help="Should app fetch data from live API")
         return parser
 
     def take_action(self, parsed_args):
-        api = self.app.api_manager
-        mgr = api.get_manager(parsed_args.resource[0])
-        url_params = {}
-        for un, uv in (parsed_args.urlparams or []):
-            url_params[un] = uv
-        items = mgr.list(cached=parsed_args.cached,
-                         generator=True,
-                         ignore_existing=parsed_args.ignore_existing,
-                         url_params=url_params)
-        for item in items:
-            print_item(item)
-            if not parsed_args.cached:
-                api.flush()
-        
+        format = self.app.options.format[0]
+        with self.app.api_manager as api:
+            mgr = api.get_manager(parsed_args.resource[0])
+            url_params = {}
+            for un, uv in (parsed_args.urlparams or []):
+                url_params[un] = uv
+            items = mgr.list(cached=parsed_args.cached,
+                             generator=True,
+                             ignore_existing=parsed_args.ignore_existing,
+                             url_params=url_params)
+            print(api.as_format(format, items, multiple=True))
 
-class Get(Command):
+class Get(_BaseCommand):
 
-    def is_allowed_resource(self, value):
-        allowed_values = self.app.api_manager.manager_names
-        if value not in allowed_values:
-            raise ValueError("Value {} not in allowed resource names".format(value))
-        return value
-        
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        parser.add_argument('resource',
-                            type=self.is_allowed_resource,
-                            nargs=1,
-                            help="Name of resource to get (projects, forms, records, values, media)")
-
         parser.add_argument('id',
                             type=str,
                             nargs=1,
                             help="ID of resource to get")
-
-        parser.add_argument('--cached',
-                            dest='cached',
-                            action='store_true',
-                            default=False,
-                            help="Should app fetch data from live API")
         return parser
 
     def take_action(self, parsed_args):
-        api = self.app.api_manager
-        mgr = api.get_manager(parsed_args.resource[0])
-        obj_id = parsed_args.id[0]
-        item = mgr.get(obj_id, cached=parsed_args.cached)
-        print_item(item)
-        api.flush()
+        format = self.app.options.format[0]
+        with self.app.api_manager as api:
+            mgr = api.get_manager(parsed_args.resource[0])
+            obj_id = parsed_args.id[0]
+            item = mgr.get(obj_id, cached=parsed_args.cached)
+            print(api.as_format(format, item))
+
+
+class Delete(_BaseCommand):
+
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        parser.add_argument('id',
+                            type=str,
+                            nargs=1,
+                            help="ID of resource to get")
+        return parser
+
+    def take_action(self, parsed_args):
+        format = self.app.options.format[0]
+        with self.app.api_manager as api:
+            mgr = api.get_manager(parsed_args.resource[0])
+            obj_id = parsed_args.id[0]
+            item = mgr.delete(obj_id)
+            print(api.as_format(format, item))
 
 
 def main():

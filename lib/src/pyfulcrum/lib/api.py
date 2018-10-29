@@ -4,6 +4,7 @@
 from .models import Session, Base, Project, Form, Record, Media, Field
 from sqlalchemy.engine import Engine, create_engine
 from .storage import Storage
+from .formats import FORMATS
 
 
 class BaseObjectManager(object):
@@ -27,6 +28,11 @@ class BaseObjectManager(object):
         return cls.path or cls.__name__[:-len('manager')].lower()
 
     def __init__(self, session, client, storage):
+        """
+        @param session - DB session
+        @param client - Fulcrum API client
+        @param storage - Storage handler
+        """
         self.session = session
         self.client = client
         self.storage = storage
@@ -41,6 +47,9 @@ class BaseObjectManager(object):
         return h
 
     def get(self, obj_id, cached=True):
+        """
+        Retrieve 
+        """
         if self.path and not cached:
             data = self._handler.find(obj_id)
             # single objects are in envelope: singular path name
@@ -53,9 +62,33 @@ class BaseObjectManager(object):
             data.update(self.default_item_args)
             return self.model.from_payload(data, self.session, self.client, self.storage)
         return self.model.get(obj_id, session=self.session)
-    
-    def list(self, cached=True, generator=False, ignore_existing=False, *args, **kwargs):
 
+    def delete(self, cached=True, *args, **kwargs):
+        self.session.delete(self)
+        return self
+
+    def list(self, cached=True, generator=False, ignore_existing=False, *args, **kwargs):
+        """
+        Return list of resources.
+        This will return list or generator of resources in local db.
+
+        @param cached - boolean (default: True) if set to False, first Fulcrum API will be
+                        called to fetch all data, then return all data from db.
+                        If set to True, only local db query is executed.
+
+        @param generator - booleand (default: False) if set to True, generator will be returned
+                        instead of list. This will optimize cases when large data sets are going
+                        to be returned.
+
+        @param ignore_existing - boolean (default: False) to be used with cached=False. In case
+                        both switches are in use, ignore_existing will cause that only items
+                        present in Fulcrum API are going to be live-queried, so no existing data
+                        update will be performed.
+
+        @param url_params - dict with query params for Fulcrum API client. By default, paging
+                        of results is enabled and 50 items per page are expected.
+
+        """
         if self.path and not cached:
             def gen():
                 # we're calling .search() which by default queries for all items
@@ -87,6 +120,8 @@ class BaseObjectManager(object):
                         if ignore_existing:
                             v = self.get(i[self.identity_key])
                             if v is not None:
+                                if isinstance(ignore_existing, list):
+                                    ignore_existing.append(i[self.identity_key])
                                 continue
                         v = self.get(i[self.identity_key], cached=False)
                         yield v
@@ -97,10 +132,22 @@ class BaseObjectManager(object):
                 return gen()
             else:
                 list(gen())
+        if kwargs.get('url_params'):
+            up = kwargs.get('url_params')
+            params = self.model.get_q_params(up)
+            return self.session.query(self.model).filter(*params)
         return self.session.query(self.model).all()
 
     def _list_item(self, item):
         return item
+
+    def sync(self):
+        """
+        Synchronize local db and remote
+        """
+        existing = []
+        self.list(cached=False, ignore_existing=existing)
+        
 
 class ProjectManager(BaseObjectManager):
     path = 'projects'
@@ -185,6 +232,18 @@ class ApiManager(object):
         self.initialize_storage(storage_cfg)
         self.initialize_managers()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        if args[0]:
+            self.rollback()
+        else:
+            self.flush()
+
+    def rollback(self):
+        self.session.rollback()
+
     def flush(self):
         self.session.commit()
 
@@ -232,3 +291,10 @@ class ApiManager(object):
         storage_cfg['url_base'] = cfg.get('url_base')
         self.storage = Storage(**storage_cfg)
         return self.storage
+
+    def as_format(self, format, item, multiple=False):
+        formatter = self.get_formatter(format)
+        return formatter(item, self.storage, multiple)
+
+    def get_formatter(self, format_name):
+        return FORMATS[format_name]

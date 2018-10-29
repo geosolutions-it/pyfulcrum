@@ -54,6 +54,7 @@ class BaseResource(Base):
                         onupdate=func.now())
     # raw json received for object
     payload = Column(JSON, nullable=True)
+    removed = Column(Boolean, nullable=False, default=False, index=True)
 
     def __str__(self):
         return u'{}({})'.format(self.__class__.__name__, self.id)
@@ -61,9 +62,22 @@ class BaseResource(Base):
     __repr__ = __str__
 
     @classmethod
-    def get(cls, id, session=None):
-        s = session or Session()
+    def get_q_params(self, *args, **kwargs):
+        """
+        Subclass should override this to provide
+        mapping between url params and query filter
+        """
+        return []
+
+    @classmethod
+    def get(cls, id, session):
+        s = session 
         return s.query(cls).filter(cls.id == id).first()
+
+    @classmethod
+    def exists(cls, id, session):
+        s = session
+        return s.query(cls.query.filter(cls.id == id).exists()).scalar()
 
     @classmethod
     def _post_payload(cls, instance, payload, session, client, storage):
@@ -117,6 +131,10 @@ class Form(BaseResource):
                       ('name', 'description', ('elements', 'fields',),)
                       )
 
+    @property
+    def records_count(self):
+        return len(self.records)
+
     @classmethod
     def _post_payload(cls, instance, payload, session, client, storage):
         # here we should process fields
@@ -129,6 +147,10 @@ class Form(BaseResource):
             Field.from_payload(f, session, client, storage)
         return
 
+    @classmethod
+    def get_q_params(cls, url_params, *args, **kwargs):
+        if url_params.get('form_id'):
+            return [cls.id == url_params['form_id']]
 
 # list of available field types from api docs
 # see https://developer.fulcrumapp.com/endpoints/\
@@ -161,6 +183,9 @@ class Field(BaseResource):
                        'type', 'form_id',)
                       )
 
+    def __str__(self):
+        return 'Field({}, label={}, type={}, description={})'.format(self.id, self.label, self.type, self.description)
+    
     @classmethod
     def _pre_payload(cls, payload, session, client, storage):
         payload['created_at'] = payload['updated_at'] =\
@@ -174,6 +199,11 @@ class Field(BaseResource):
         payload.pop('id', None)
         payload.pop('created_at', None)
         payload.pop('updated_at', None)
+
+    @property
+    def media_key(self):
+        if self.type in ('SignatureField', 'AudioField', 'PhotoField', 'VideoField',):
+            return '{}_id'.format(self.type.lower()[:-len('field')])
 
 
 class Record(BaseResource):
@@ -200,6 +230,20 @@ class Record(BaseResource):
                        'values', 'status', 'created_by',
                        'updated_by', 'assigned_to',)
                       )
+    
+    def get_values(self, storage):
+        media = {}
+        for m in self.media_list:
+            try:
+                media[m.id].append(m)
+            except KeyError:
+                media[m.id] = [m]
+        out = {}
+        for val in self.values_list:
+            fval = val.get_value(storage)
+            out[fval['label']] = fval
+        return out
+
     @classmethod
     def _pre_payload(cls, payload, session, client, storage):
         f = payload
@@ -223,7 +267,7 @@ class Record(BaseResource):
             f = {}
             f['type'] = fdef.type
             f['record_id'] = instance.id
-            f['value'] = json.dumps(field_value)
+            f['value'] = field_value
             f['meta'] = {'key': field_id,
                          'value': field_value}
             f['field_id'] = field_id
@@ -235,6 +279,11 @@ class Record(BaseResource):
        # cleanup payload for saving
         payload.pop('point', None)
         payload.pop('values', None)
+
+    @classmethod
+    def get_q_params(cls, url_params, *args, **kwargs):
+        if url_params.get('form_id'):
+            return [cls.form_id == url_params['form_id']]
 
 
 class Value(BaseResource):
@@ -267,6 +316,35 @@ class Value(BaseResource):
             payload.pop(k)
 
 
+    def get_value(self, storage):
+        field = self.field
+        out = {'key': self.field_id,
+               'description': field.description,
+               'label': field.label,
+               'type': field.type,
+               'value': self.value,
+               'media': [],
+               }
+        # name of key in values list with media id
+        media_key = field.media_key
+        if media_key:
+            media = dict((m.id, m) for m in self.record.media_list)
+            # iterate over items in value
+            values = self.value
+            if isinstance(self.value, dict):
+                values = [self.value]
+                
+            for media_item in values:
+                mkey = media_item[media_key]
+                caption = media_item.get('caption')
+                m = media[mkey]
+                if m:
+                    out['media'].append({'id': m.id,
+                                         'caption': caption,
+                                         'type': m.media_type,
+                                         'paths': m.get_paths(storage)})
+        return out
+
 class Media(BaseResource):
     MEDIA_PHOTO = 'photo'
     MEDIA_AUDIO = 'audio'
@@ -288,6 +366,8 @@ class Media(BaseResource):
     content_type = Column(String, nullable=False)
     track = Column(Geometry('LINESTRING'), nullable=True)
     media_type = Column(Enum(*MEDIA_TYPES, name='media_types'), nullable=False, index=True)
+    form = relationship(Form, backref='media_list')
+    record = relationship(Record, backref='media_list')
 
     MAPPED_COLUMNS = (BaseResource.MAPPED_COLUMNS +
                       ('created_by', 'updated_by', 'point',
@@ -305,7 +385,7 @@ class Media(BaseResource):
                    'thumbnail_huge_square',
                    'small', 'medium',
                    'original',)
-    SIZES_AUDIO = ('track',)
+    SIZES_AUDIO = ('small', 'medium', 'original',)
     SIZES_ALL = tuple(set(SIZES_PHOTO + SIZES_SIGNATURE + SIZES_VIDEO + SIZES_AUDIO))
     SIZES = {'photo': SIZES_PHOTO,
              'audio': SIZES_AUDIO,
@@ -321,6 +401,7 @@ class Media(BaseResource):
             point = 'POINT({latitude} {longitude})'.format(latitude=f['latitude'],
                                                            longitude=f['longitude'])
         f['point'] = point
+            
         return payload
 
     def get_path(self, storage, size):
