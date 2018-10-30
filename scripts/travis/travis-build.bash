@@ -19,6 +19,7 @@ sudo apt-get install gdal-bin libgdal-dev python3-dev aptitude
 cd lib
 
 python3 -m venv venv
+ls venv
 aptitude search gdal
 venv/bin/pip install pygdal==$(gdal-config --version)
 venv/bin/pip install -r requirements.txt
