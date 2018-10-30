@@ -15,5 +15,10 @@ services:
 script: bash scripts/travis/travis-run.sh
 before_install:
     - pip install codecov
+before_script:
+  - psql -c "create role pyfulcrum superuser login password 'pyfulcrum';" -U postgres
+  - psql -c 'create database pyfulcrum_test;' -U postgres
+  - psql -c 'create extension postgis;' -U pyfulcrum -d pyfulcrum_test
+
 after_success:
     - codecov
