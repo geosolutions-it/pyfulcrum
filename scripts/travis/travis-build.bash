@@ -25,6 +25,7 @@ pip install pygdal==2.2.2.3 # $(gdal-config --version)
 pip install -r requirements.txt
 pip install -e .
 
+aptitude search gdal
 # sudo aptitude install postgis
 # postgresql-9.6-postgis-2.3
 sudo service postgresql start
