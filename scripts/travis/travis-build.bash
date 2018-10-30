@@ -24,6 +24,7 @@ pip install pygdal==2.2.2.3 # $(gdal-config --version)
 pip install -r requirements.txt
 pip install -e .
 
+sudo service postgresql start
 cd -
 sudo -u postgres psql -U postgres -c "create role pyfulcrum superuser login password 'pyfulcrum';"
 sudo -u postgres psql -U postgres -c "create database pyfulcrum_test owner pyfulcrum;"
