@@ -4,7 +4,7 @@ language: python
 python:
     - "3.6"
 install:
-    - bash travis/travis-build.bash
+    - bash scripts/travis/travis-build.bash
 addons:
   postgresql: "10"
   apt:
