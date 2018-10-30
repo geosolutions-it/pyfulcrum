@@ -15,13 +15,14 @@ sudo apt-get -qq --fix-missing update
 sudo apt-get install gdalt 
 
 # PostGIS 2.1 already installed on Travis
+cd lib
 
 python3 -m venv venv
 echo 'gdal version', $(gdal-config --version)
 venv/bin/pip install -r requirements.txt
 venv/bin/pip install -e .
 # ckan/test-core.ini
-
+cd -
 sudo -u postgres -c "create role pyfulcrum superuser login password 'pyfulcrum';"
 sudo -u postgres -c "create database pyfulcrum_test owner pyfulcrum;"
 sudo -u postgres pyfulcrum -c 'create extension postgis;'
