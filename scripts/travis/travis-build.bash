@@ -19,13 +19,11 @@ sudo apt-get install gdal-bin libgdal-dev python3-dev aptitude python3-pip pytho
 cd lib
 
 sudo pip install --upgrade pip
-python3 -m venv -h
-python3 -m venv venv
 ls venv/bin
 aptitude search gdal
-venv/bin/pip install pygdal==$(gdal-config --version)
-venv/bin/pip install -r requirements.txt
-venv/bin/pip install -e .
+sudo pip install pygdal==$(gdal-config --version)
+sudo pip install -r requirements.txt
+sudo pip install -e .
 # ckan/test-core.ini
 cd -
 sudo -u postgres -c "create role pyfulcrum superuser login password 'pyfulcrum';"
