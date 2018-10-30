@@ -20,7 +20,7 @@ sudo apt-get install gdal-bin libgdal-dev python3-dev aptitude python3-pip pytho
 cd lib
 
 pip install --upgrade pip
-pip install pygdal==$(gdal-config --version)
+pip install pygdal==2.2.2.3 # $(gdal-config --version)
 pip install -r requirements.txt
 pip install -e .
 
