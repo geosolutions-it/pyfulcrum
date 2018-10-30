@@ -19,7 +19,6 @@ sudo apt-get install gdal-bin libgdal-dev python3-dev aptitude python3-pip pytho
 cd lib
 
 sudo pip install --upgrade pip
-ls venv/bin
 aptitude search gdal
 sudo pip install pygdal==$(gdal-config --version)
 sudo pip install -r requirements.txt
