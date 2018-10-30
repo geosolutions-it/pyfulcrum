@@ -9,13 +9,12 @@ sudo rm -f /etc/apt/sources.list.d/mongodb-3.2.list
 sudo add-apt-repository --remove 'http://us-central1.gce.archive.ubuntu.com/ubuntu/ main restricted'
 sudo add-apt-repository --remove 'http://us-central1.gce.archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository --remove 'http://us-central1.gce.archive.ubuntu.com/ubuntu/ multiverse'
-sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
-sudo add-apt-repository ppa:ubuntugis/ppa -y
+sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-testing
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ multiverse'
 sudo apt-get -qq --fix-missing update
-sudo aptitude remove posgresql-9.5-postgis-2.4
+sudo aptitude remove postgresql-9.5-postgis-2.4
 sudo aptitude install libgdal20 python3-dev python3-pip python3-wheel
 sudo apt-get install libgdal-dev==2.2.2 
 
