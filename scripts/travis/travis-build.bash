@@ -18,14 +18,14 @@ sudo aptitude remove -y postgresql-9.5-postgis-2.4
 sudo aptitude install -y libgdal20 python3-dev python3-pip python3-wheel
 sudo apt-get install libgdal-dev
 
-sudo aptitude install posgresql-9.5-postgis-2.4
+sudo aptitude install postgresql-9.5-postgis-2.4
 
 
 # PostGIS 2.1 already installed on Travis
 cd lib
 
 pip install --upgrade pip
-pip install pygdal==2.2.2.3 # $(gdal-config --version)
+pip install pygdal==2.1.0 # $(gdal-config --version)
 pip install -r requirements.txt
 pip install -e .
 
