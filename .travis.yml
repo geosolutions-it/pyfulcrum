@@ -6,10 +6,10 @@ python:
 install:
     - bash scripts/travis/travis-build.bash
 addons:
-  postgresql: "10"
+  postgresql: "9.5"
   apt:
     packages:
-    - postgresql-10-postgis-2.4
+    - postgresql-9.5-postgis-2.4
 services:
     - postgresql
 script: bash scripts/travis/travis-run.sh
