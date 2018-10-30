@@ -14,8 +14,7 @@ sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ multiverse'
 sudo apt-get -qq --fix-missing update
-aptitude search gdal
-sudo apt-get install gdal libgdal20-dev python3-dev aptitude python3-pip python3-wheel
+sudo apt-get install libgdal20 python3-dev aptitude python3-pip python3-wheel
 
 
 # PostGIS 2.1 already installed on Travis
