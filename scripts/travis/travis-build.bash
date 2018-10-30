@@ -25,9 +25,9 @@ pip install -r requirements.txt
 pip install -e .
 
 sudo service postgresql start
-cd -
-sudo -u postgres psql -U postgres -c "create role pyfulcrum superuser login password 'pyfulcrum';"
-sudo -u postgres psql -U postgres -c "create database pyfulcrum_test owner pyfulcrum;"
-sudo -u postgres psql -U postgres pyfulcrum -c 'create extension postgis;'
+
+sudo -u postgres psql -c "create role pyfulcrum superuser login password 'pyfulcrum';"
+sudo -u postgres psql -c "create database pyfulcrum_test owner pyfulcrum;"
+sudo -u postgres psql -d pyfulcrum -c 'create extension postgis;'
 
 echo "travis-build.bash is done."
