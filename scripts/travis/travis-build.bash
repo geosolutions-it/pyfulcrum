@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 echo "This is travis-build.bash..."
 
@@ -12,13 +13,13 @@ sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ multiverse'
 sudo apt-get -qq --fix-missing update
-sudo apt-get install gdal-bin libgdal-dev python3-dev
+sudo apt-get install gdal-bin libgdal-dev python3-dev aptitude
 
 # PostGIS 2.1 already installed on Travis
 cd lib
 
 python3 -m venv venv
-apt-cache search gdal
+aptitude search gdal
 venv/bin/pip install pygdal==$(gdal-config --version)
 venv/bin/pip install -r requirements.txt
 venv/bin/pip install -e .
