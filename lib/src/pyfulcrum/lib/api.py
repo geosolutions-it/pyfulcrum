@@ -292,9 +292,9 @@ class ApiManager(object):
         self.storage = Storage(**storage_cfg)
         return self.storage
 
-    def as_format(self, format, item, multiple=False):
+    def as_format(self, format, item, multiple=False, *args, **kwargs):
         formatter = self.get_formatter(format)
-        return formatter(item, self.storage, multiple)
+        return formatter(item, self.storage, multiple, *args, **kwargs)
 
     def get_formatter(self, format_name):
         return FORMATS[format_name]

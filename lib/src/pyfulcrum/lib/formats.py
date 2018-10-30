@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import json
 from shapely import wkb
-from osgeo import ogr 
+from osgeo import ogr, osr
 from io import StringIO
 ogr.UseExceptions()
 
@@ -115,6 +116,19 @@ def format_geojson(items, storage, multiple=False):
     if not multiple:
         return json.dumps(out[0])
     return json.dumps({'type': 'FeatureCollection', 'features': out})
+
+
+def format_shapefile(items, storage, multiple=False, outfile=None):
+    if outfile is None:
+        raise ValueError("Shapefile format needs output file")
+    drv = ogr.GetDriverByName('ESRI Shapefile')
+    data = drv.CreateDataSource(outfile)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    basename = os.path.splitext(os.path.basename(outfile))[0]
+    # create the layer
+    layer = data.CreateLayer(basename, srs, ogr.wkbPoint)
+
 
 
 FORMATS = {'str': format_str,

@@ -151,6 +151,8 @@ class Form(BaseResource):
     def get_q_params(cls, url_params, *args, **kwargs):
         if url_params.get('form_id'):
             return [cls.id == url_params['form_id']]
+        return []
+
 
 # list of available field types from api docs
 # see https://developer.fulcrumapp.com/endpoints/\
@@ -284,7 +286,7 @@ class Record(BaseResource):
     def get_q_params(cls, url_params, *args, **kwargs):
         if url_params.get('form_id'):
             return [cls.form_id == url_params['form_id']]
-
+        return []
 
 class Value(BaseResource):
     __tablename__ = 'fulcrum_value'

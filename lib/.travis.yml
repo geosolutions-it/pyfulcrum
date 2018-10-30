@@ -1,0 +1,19 @@
+dist: trusty
+sudo: required
+language: python
+python:
+    - "3.6"
+install:
+    - bash scripts/travis/travis-build.bash
+addons:
+  postgresql: "10"
+  apt:
+    packages:
+    - postgresql-10-postgis-2.5
+services:
+    - postgresql
+script: bash scripts/travis/travis-run.sh
+before_install:
+    - pip install codecov
+after_success:
+    - codecov
