@@ -28,8 +28,8 @@ pip install -e .
 aptitude search postgresql
 sudo service postgresql start
 
-sudo -u postgres psql -p 5433 -c "create role pyfulcrum superuser login password 'pyfulcrum';"
-sudo -u postgres psql -p 5433 -c "create database pyfulcrum_test owner pyfulcrum;"
-sudo -u postgres psql -p 5433 -d pyfulcrum_test -c 'create extension postgis;'
+sudo -u postgres psql -c "create role pyfulcrum superuser login password 'pyfulcrum';"
+sudo -u postgres psql -c "create database pyfulcrum_test owner pyfulcrum;"
+sudo -u postgres psql -d pyfulcrum_test -c 'create extension postgis;'
 
 echo "travis-build.bash is done."
