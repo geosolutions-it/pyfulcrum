@@ -14,9 +14,11 @@ sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ multiverse'
 sudo apt-get -qq --fix-missing update
-sudo aptitude remove -y postgresql-9.5-postgis-2.4
-sudo aptitude install -y libgdal20 python3-dev python3-pip python3-wheel
-sudo apt-get install libgdal-dev
+# sudo aptitude remove -y postgresql-9.5-postgis-2.4
+# sudo aptitude install -y libgdal20 python3-dev python3-pip python3-wheel
+# sudo apt-get install libgdal-dev
+
+sudo dpkg -l postgresql
 
 sudo aptitude install -t ubuntugis-testing postgresql-9.5-postgis-2.4
 
