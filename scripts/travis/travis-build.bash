@@ -19,7 +19,7 @@ sudo aptitude install -y libgdal20 python3-dev python3-pip python3-wheel
 sudo apt-get install libgdal-dev
 
 
-sudo apt-get install postgresql-9.5-postgis-2.3=2.3.2+dfsg-1~xenial0
+sudo apt-get install postgresql-9.5-postgis-2.3=2.3.3+dfsg-1~xenial0
 
 
 # PostGIS 2.1 already installed on Travis
