@@ -9,7 +9,7 @@ sudo rm -f /etc/apt/sources.list.d/mongodb-3.2.list
 sudo add-apt-repository --remove 'http://us-central1.gce.archive.ubuntu.com/ubuntu/ main restricted'
 sudo add-apt-repository --remove 'http://us-central1.gce.archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository --remove 'http://us-central1.gce.archive.ubuntu.com/ubuntu/ multiverse'
-sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
+sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ multiverse'
