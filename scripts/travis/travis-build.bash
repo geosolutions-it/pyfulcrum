@@ -12,7 +12,7 @@ sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ multiverse'
 sudo apt-get -qq --fix-missing update
-sudo apt-get install gdalt 
+sudo apt-get install gdal
 
 # PostGIS 2.1 already installed on Travis
 cd lib
