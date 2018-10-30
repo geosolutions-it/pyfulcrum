@@ -18,7 +18,8 @@ sudo apt-get install gdal-bin libgdal-dev python3-dev
 cd lib
 
 python3 -m venv venv
-echo 'gdal version', $(gdal-config --version)
+apt-get search gdal
+venv/bin/pip install pygdal==$(gdal-config --version)
 venv/bin/pip install -r requirements.txt
 venv/bin/pip install -e .
 # ckan/test-core.ini
