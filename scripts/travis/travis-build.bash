@@ -9,7 +9,7 @@ sudo rm -f /etc/apt/sources.list.d/mongodb-3.2.list
 sudo add-apt-repository --remove 'http://us-central1.gce.archive.ubuntu.com/ubuntu/ main restricted'
 sudo add-apt-repository --remove 'http://us-central1.gce.archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository --remove 'http://us-central1.gce.archive.ubuntu.com/ubuntu/ multiverse'
-sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-testing
+sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ multiverse'
@@ -20,8 +20,11 @@ sudo apt-get install libgdal-dev
 
 sudo apt-cache madison postgresql-9.5-postgis-2.3
 sudo apt-cache madison postgresql-9.5-postgis-2.4
+sudo apt-cache madison postgis
 sudo apt-cache policy postgresql-9.5-postgis-2.3
 sudo apt-cache policy postgresql-9.5-postgis-2.4
+sudo apt-cache policy postgis
+
 
 
 sudo apt-get install postgresql-9.5-postgis-2.3=2.3.3
@@ -43,4 +46,4 @@ sudo service postgresql start
 #sudo -u postgres psql -c "create database pyfulcrum_test owner pyfulcrum;"
 #sudo -u postgres psql -d pyfulcrum_test -c 'create extension postgis;'
 
-echo "travis-build.bash is done."
+echo "travis-build.bash is done."f
