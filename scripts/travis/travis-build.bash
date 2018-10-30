@@ -18,12 +18,13 @@ sudo apt-get install gdal-bin libgdal-dev python3-dev aptitude python3-pip pytho
 # PostGIS 2.1 already installed on Travis
 cd lib
 
-sudo pip install --upgrade pip
-aptitude search gdal
-sudo pip install pygdal==$(gdal-config --version)
-sudo pip install -r requirements.txt
-sudo pip install -e .
-# ckan/test-core.ini
+python3 -m venv --system-site-packages venv
+VENV=venv/bin/
+${VENV}pip install --upgrade pip
+${VENV}pip install pygdal==$(gdal-config --version)
+${VENV}pip install -r requirements.txt
+${VENV}pip install -e .
+
 cd -
 sudo -u postgres -c "create role pyfulcrum superuser login password 'pyfulcrum';"
 sudo -u postgres -c "create database pyfulcrum_test owner pyfulcrum;"
