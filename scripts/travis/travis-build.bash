@@ -27,7 +27,7 @@ sudo apt-get install libgdal-dev
 
 
 
-sudo apt-get install postgresql-9.5-postgis-2.2
+sudo apt-get install postgresql-9.5-postgis-2.2=2.2.2+dfsg-2~trusty1
 
 # PostGIS 2.1 already installed on Travis
 cd lib
