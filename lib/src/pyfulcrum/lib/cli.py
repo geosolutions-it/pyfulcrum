@@ -30,6 +30,8 @@ class PyFulcrumApp(App):
         parser.add_argument('--storage', type=str, nargs=1, required=True, help="Storage directory root")
         parser.add_argument('--format', type=str, nargs=1, required=False, default=('json',),
                             help="Return format (default: json)")
+        parser.add_argument('--output', type=str, nargs=1, required=False, default=tuple(),
+                            help="Name of output file, standard output as default")
         return parser
 
 
@@ -54,6 +56,14 @@ class _BaseCommand(Command):
         if value not in allowed_values:
             raise ValueError("Value {} not in allowed resource names".format(value))
         return value
+
+    def write_output(self, output):
+        output_f = self.app.options.output[0] if self.app.options.output else None
+        if output_f:
+            with open(output_f, 'wb+') as f:
+                f.write(output)
+        else:
+            print(output)
 
     @staticmethod
     def is_urlparam(value):
@@ -104,7 +114,8 @@ class List(_BaseCommand):
                              generator=True,
                              ignore_existing=parsed_args.ignore_existing,
                              url_params=url_params)
-            print(api.as_format(format, items, multiple=True))
+            output = api.as_format(format, items, multiple=True)
+            self.write_output(output)
 
 class Get(_BaseCommand):
 
@@ -122,7 +133,8 @@ class Get(_BaseCommand):
             mgr = api.get_manager(parsed_args.resource[0])
             obj_id = parsed_args.id[0]
             item = mgr.get(obj_id, cached=parsed_args.cached)
-            print(api.as_format(format, item))
+            output = api.as_format(format, item)
+            self.write_output(output)
 
 
 class Delete(_BaseCommand):
@@ -141,7 +153,8 @@ class Delete(_BaseCommand):
             mgr = api.get_manager(parsed_args.resource[0])
             obj_id = parsed_args.id[0]
             item = mgr.delete(obj_id)
-            print(api.as_format(format, item))
+            output = api.as_format(format, item)
+            self.write_output(output)
 
 
 def main():

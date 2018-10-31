@@ -4,6 +4,9 @@
 import os
 import sys
 import json
+import tempfile
+import zipfile
+from functools import wraps
 from shapely import wkb
 from osgeo import ogr, osr
 from io import StringIO
@@ -11,6 +14,19 @@ ogr.UseExceptions()
 
 print_attrs = ('id', 'status', 'name', 'media_type', 'content_type', 'form_id', 'record_id', 'records_count', 'values_processed')
 
+
+
+def formatter(f):
+    @wraps(f)    
+    def _wrap(items, storage, multiple=False):
+        if not items:
+            if multiple:
+                return []
+            return
+        if not multiple:
+            items = [items]
+        return f(items, storage, multiple=multiple)
+    return _wrap
 
 def print_item(obj, storage, output=None):
     if output is None:
@@ -67,11 +83,9 @@ def geojson_item(obj, storage):
            'properties': obj.get_values(storage) if hasattr(obj, 'get_values') else obj.payload}
     return out
 
-
+@formatter
 def format_str(items, storage, multiple=False):
     out = []
-    if not multiple:
-        items = [items]
     for item in items:
         output = StringIO()
         print_item(item, storage, output)
@@ -81,11 +95,9 @@ def format_str(items, storage, multiple=False):
     return '\n'.join(out)
 
 
+@formatter
 def format_json(items, storage, multiple=False):
     out = []
-    if not multiple:
-        items = [items]
-
     for item in items:
         out.append(json_item(item, storage))
     if not multiple:
@@ -93,11 +105,9 @@ def format_json(items, storage, multiple=False):
     return json.dumps(out)
 
 
+@formatter
 def format_raw(items, storage, multiple=False):
     out = []
-    if not multiple:
-        items = [items]
-
     for item in items:
         out.append(item.payload)
     if not multiple:
@@ -105,10 +115,9 @@ def format_raw(items, storage, multiple=False):
     return json.dumps(out)
 
 
+@formatter
 def format_geojson(items, storage, multiple=False):
     out = []
-    if not multiple:
-        items = [items]
     for item in items:
         val = geojson_item(item, storage)
         if val is not None:
@@ -118,20 +127,70 @@ def format_geojson(items, storage, multiple=False):
     return json.dumps({'type': 'FeatureCollection', 'features': out})
 
 
-def format_shapefile(items, storage, multiple=False, outfile=None):
-    if outfile is None:
-        raise ValueError("Shapefile format needs output file")
-    drv = ogr.GetDriverByName('ESRI Shapefile')
-    data = drv.CreateDataSource(outfile)
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    basename = os.path.splitext(os.path.basename(outfile))[0]
-    # create the layer
-    layer = data.CreateLayer(basename, srs, ogr.wkbPoint)
+@formatter
+def format_shapefile(items, storage, multiple=False):
+    item_class = items[0].__class__.__name__
+    item_row = items[0]
+    if not hasattr(item_row, 'point'):
+        return
+    item_defs = [('id', ogr.FieldDefn('id', ogr.OFTString), 0,)]
+   
+    item_idx = 0
+    for fname in item_row.payload.keys():
+        if fname == 'id': 
+            continue
+        if fname == 'form_values':
+            for fname, value in item_row.payload['form_values'].items():
+                item_defs.append(('field.{}'.format(fname), ogr.FieldDefn('f_{}'.format(fname), ogr.OFTString), item_idx,))
+                item_idx += 1
+        else:
+            item_defs.append((fname, ogr.FieldDefn(fname, ogr.OFTString), item_idx,))
+        item_idx += 1
+        
+    basename = '{}s'.format(item_class.lower())
+    outfile = '{}.shp'.format(basename)
+    zfile = '{}.zip'.format(outfile)
 
+    drv = ogr.GetDriverByName('ESRI Shapefile')
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        full_path = os.path.join(tmpdirname, outfile)
+        data = drv.CreateDataSource(full_path)
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+        layer = data.CreateLayer(basename, srs, ogr.wkbPoint)
+        for fname, fdef, fidx in item_defs:
+            layer.CreateField(fdef)
+        ldef = layer.GetLayerDefn()
+        for item in items:
+            feat = ogr.Feature(layer.GetLayerDefn())
+            for fname, fdef, fidx in item_defs:
+                if fname == 'id':
+                    value = item.id
+                elif fname.startswith('field.'):
+                    value = json.dumps(item.payload['form_values'].get(fname[len('field.'):]))
+                else:
+                    value = item.payload[fname]
+                if isinstance(value, (list, dict,)):
+                    value = json.dumps(value)
+                feat.SetField(fidx, value)
+            point = item.point.data.tobytes()
+            geom = ogr.CreateGeometryFromWkb(point)
+            feat.SetGeometry(geom)
+            layer.CreateFeature(feat)
+        data.Destroy()
+        files = os.listdir(tmpdirname)
+        zfile = os.path.join(tmpdirname, zfile)
+
+        with zipfile.ZipFile(zfile, mode='w') as zf:
+            for fname in files:
+                zf.write(os.path.join(tmpdirname, fname), arcname='/{}'.format(fname))
+        
+        with open(zfile, 'rb') as zf:
+            return zf.read()
 
 
 FORMATS = {'str': format_str,
            'json': format_json,
            'geojson': format_geojson,
+           'shapefile': format_shapefile,
            'raw': format_raw}
