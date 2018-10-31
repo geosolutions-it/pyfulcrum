@@ -14,21 +14,20 @@ sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ multiverse'
 sudo apt-get -qq --fix-missing update
-sudo aptitude remove -y postgresql-9.5-postgis-2.3
+sudo aptitude remove -y postgresql-9.5-postgis-2.2
 sudo aptitude install -y libgdal20 python3-dev python3-pip python3-wheel
 sudo apt-get install libgdal-dev
 
-sudo apt-cache madison postgresql-9.5-postgis-2.3
-sudo apt-cache madison postgresql-9.5-postgis-2.4
-sudo apt-cache madison postgis
-sudo apt-cache policy postgresql-9.5-postgis-2.3
-sudo apt-cache policy postgresql-9.5-postgis-2.4
-sudo apt-cache policy postgis
+#sudo apt-cache madison postgresql-9.5-postgis-2.3
+#sudo apt-cache madison postgresql-9.5-postgis-2.4
+#sudo apt-cache madison postgis
+#sudo apt-cache policy postgresql-9.5-postgis-2.3
+#sudo apt-cache policy postgresql-9.5-postgis-2.4
+#sudo apt-cache policy postgis
 
 
 
-sudo apt-get install postgresql-9.5-postgis-2.3=2.3.3
-
+sudo apt-get install postgresql-9.5-postgis-2.2
 
 # PostGIS 2.1 already installed on Travis
 cd lib
