@@ -129,21 +129,31 @@ def format_geojson(items, storage, multiple=False):
 
 @formatter
 def format_shapefile(items, storage, multiple=False):
+    """
+    Output to shapefile as zip
+    """
     item_class = items[0].__class__.__name__
     item_row = items[0]
+    # we don't want to process entries without geometry
     if not hasattr(item_row, 'point'):
         return
+
+    # need to extract field names from first item in list
     item_defs = [('id', ogr.FieldDefn('id', ogr.OFTString), 0,)]
    
     item_idx = 0
     for fname in item_row.payload.keys():
+        # id was already added
         if fname == 'id': 
             continue
+        # form values is a dictionary, we need to extract each field
         if fname == 'form_values':
             for fname, value in item_row.payload['form_values'].items():
                 item_defs.append(('field.{}'.format(fname), ogr.FieldDefn('f_{}'.format(fname), ogr.OFTString), item_idx,))
                 item_idx += 1
         else:
+            # warning: SHP has silly limitation on field name, it will
+            # truncate longer names. Better to use GeoJSON instead
             item_defs.append((fname, ogr.FieldDefn(fname, ogr.OFTString), item_idx,))
         item_idx += 1
         
@@ -158,18 +168,25 @@ def format_shapefile(items, storage, multiple=False):
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(4326)
         layer = data.CreateLayer(basename, srs, ogr.wkbPoint)
+
+        # create layer definitions from fields from above
         for fname, fdef, fidx in item_defs:
             layer.CreateField(fdef)
         ldef = layer.GetLayerDefn()
         for item in items:
             feat = ogr.Feature(layer.GetLayerDefn())
+            # populate properties
             for fname, fdef, fidx in item_defs:
                 if fname == 'id':
                     value = item.id
+                # form value, need to serialize to json
+                # warning - SHP has silly 256 char limitation for VALUE
+                # that means some fields may be truncated
                 elif fname.startswith('field.'):
                     value = json.dumps(item.payload['form_values'].get(fname[len('field.'):]))
                 else:
                     value = item.payload[fname]
+                # definition expects string here
                 if isinstance(value, (list, dict,)):
                     value = json.dumps(value)
                 feat.SetField(fidx, value)
@@ -183,6 +200,7 @@ def format_shapefile(items, storage, multiple=False):
 
         with zipfile.ZipFile(zfile, mode='w') as zf:
             for fname in files:
+                # no subpath for archive names by using arcname
                 zf.write(os.path.join(tmpdirname, fname), arcname='/{}'.format(fname))
         
         with open(zfile, 'rb') as zf:
