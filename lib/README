@@ -2,20 +2,79 @@
 
 ## Introduction
 
-PyFulcrum is a python library 
+PyFulcrum is a python library that fetches contents from Fulcrum API (https://www.fulcrumapp.com/) and saves it to local database/storage. It also exposes own API to update and retrive saved content. 
+
+
+## Requirements
+
+PyFulcrum requires:
+ * python newest 3.x interpreter (written with python 3.6)
+ * GDAL 2.x with development package (python bindings will be provided by pygdal)
+ * Fulcrum API key (see https://developer.fulcrumapp.com/api/intro/#authentication)
+ * Local storage with considerable amount of free space (depending on amount of media files stored in Fulcrum).
+ * PostgreSQL 9.6 + PostGIS database cluster
 
 ## Installation
 
-## Configuration
+ Installation is simple:
 
+ 1. Obtain Fulcrum API key
+ 1. Create `pyfulcrum` database (with `pyfulcrum` user):
 
-### Database
+```
+psql -U postgres -c "create user pyfulcrum superuser login password 'pyfulcrum'; create database pyfulcrum owner pyfulcrum;"
+psql -U pyfulcrum -c "create extension postgis;"
 
-### API key
+```
 
-### Storage
+ 1. Create directory for storage
 
-### Environment
+```
+mkdir -p /path/to/storage/dir
+```
+
+ 1. Clone PyFulcrum repo
+
+```
+git clone https://github.com/geosolutions-it/pyfulcrum.git
+```
+
+ 1. Enter `lib` direcotry and create venv
+```
+cd lib
+python3 -m venv venv
+```
+
+ 1. Obtain gdal version and install according version of pygdal (see https://github.com/nextgis/pygdal):
+
+```
+gdal-config --version
+venv/bin/pip install pygdal==$(gdal-config --version)
+```
+
+ 1. Install dependencies and library:
+
+```
+venv/bin/pip install -r requirements.txt
+venv/bin/pip install -e .
+```
+
+ 1. Copy `alembic.ini` to `local-db.ini` and replace `sqlalchemy.url` value to value adjusted to your database.
+
+```
+cp alembic.ini local-db.ini
+```
+
+```
+$ cat local-db.ini | grep sqlalchemy
+sqlalchemy.url = postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum
+```
+
+ 1. Apply migrations
+
+```
+venv/bin/alembic -c local-db.ini upgrade head
+```
 
 ## Usage
 
