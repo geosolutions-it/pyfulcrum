@@ -7,6 +7,7 @@ import json
 import tempfile
 import zipfile
 import csv
+from itertools import chain
 from functools import wraps
 from shapely import wkb
 from osgeo import ogr, osr
@@ -56,7 +57,9 @@ def formatter(allowed_classes=None):
             if not multiple:
                 items = [items]
             if allowed_classes:
-                cls_name = items[0].__class__.__name__
+                
+                first_item = next(items)
+                cls_name = first_item.__class__.__name__
                 if isinstance(allowed_classes, list):
                     if cls_name not in allowed_classes:
                         raise TypeError("Cannot use class {} with {}"
@@ -65,7 +68,8 @@ def formatter(allowed_classes=None):
                     if cls_name != allowed_classes:
                         raise TypeError("Cannot use class {} with {}"
                                         .format(cls_name, f.__name__))
-                        
+                     
+                items = chain([first_item], items)
             return f(items, storage, multiple=multiple)
         return _wrap
     return _formatter
@@ -176,7 +180,8 @@ def format_csv(items, storage, multiple=False):
     out = StringIO()
     w = csv.writer(out, quoting=csv.QUOTE_NONNUMERIC)
     header = ['id']
-    item_row = items[0]
+    item_row = next(items)
+
     for fname in item_row.payload.keys():
         # id was already added
         if fname == 'id': 
@@ -191,7 +196,7 @@ def format_csv(items, storage, multiple=False):
     header = header[:1] + list(sorted(header[1:]))
     w.writerow(header)
 
-    for item in items:
+    for item in chain([item_row], items):
         row = [item.id]
         payload = item.payload
         for k in header[1:]:
@@ -228,11 +233,8 @@ def format_kml(items, storage, multiple=False):
                        use_zip=False)
 
 def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use_zip=False):
-    item_class = items[0].__class__.__name__
-    item_row = items[0]
-    # we don't want to process entries without geometry
-    if not hasattr(item_row, 'point'):
-        return
+    item_row = next(items)
+    item_class = item_row.__class__.__name__
 
     # need to extract field names from first item in list
     item_defs = [('id', ogr.FieldDefn('id', ogr.OFTString), 0,)]
@@ -269,7 +271,12 @@ def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use
         for fname, fdef, fidx in item_defs:
             layer.CreateField(fdef)
         ldef = layer.GetLayerDefn()
-        for item in items:
+        for item in chain([item_row], items):
+
+            # we don't want to process entries without geometry
+            if not getattr(item, 'point', None):
+                continue
+
             feat = ogr.Feature(layer.GetLayerDefn())
             # populate properties
             for fname, fdef, fidx in item_defs:
@@ -286,8 +293,12 @@ def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use
                 if isinstance(value, (list, dict,)):
                     value = json.dumps(value)
                 feat.SetField(fidx, value)
-            point = item.point.data.tobytes()
-            geom = ogr.CreateGeometryFromWkb(point)
+            if isinstance(item.point, str):
+                point = item.point
+                geom = ogr.CreateGeometryFromWkt(point)
+            else:
+                point = item.point.data.tobytes()
+                geom = ogr.CreateGeometryFromWkb(point)
             feat.SetGeometry(geom)
             layer.CreateFeature(feat)
         data.Destroy()
