@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import json
-from io import BytesIO
+import csv
+from io import BytesIO, StringIO
 import zipfile
 
 from . import BaseTestCase
@@ -105,3 +106,33 @@ class FormatTestCase(BaseTestCase):
         f = FORMATS['kml']
         out = BytesIO(bytes(f(r, self._storage, multiple=False)))
         self.assertEqual(out.read(5), b'<?xml')
+
+
+    def test_format_csv(self):
+    
+        self.api_manager.forms.list(cached=False)
+        self.api_manager.records.list(cached=False)
+        self.api_manager.photos.list(cached=False)
+
+        r = self.api_manager.records.get('4e1c33ad-5496-4818-826f-504e66239b4d')
+        f = FORMATS['csv']
+        out = StringIO(f(r, self._storage, multiple=False))
+        reader = csv.reader(out)
+        rcount = 0
+        row = next(reader)
+        self.assertTrue(row[0] == 'id')
+        self.assertTrue(len(row) > 1)
+        row = next(reader)
+        self.assertEqual(row[0], '4e1c33ad-5496-4818-826f-504e66239b4d')
+        self.assertRaises(StopIteration, next, reader)
+
+
+    def test_invalid_format_class(self):
+
+        self.api_manager.forms.list(cached=False)
+        self.api_manager.records.list(cached=False)
+        self.api_manager.photos.list(cached=False)
+
+        r = self.api_manager.photos.get("622997aa-929f-4758-bd86-859cc7435e3f")
+        f = FORMATS['shapefile']
+        self.assertRaises(TypeError, f, r, self._storage, False)

@@ -12,6 +12,16 @@ from cliff.show import ShowOne
 
 from fulcrum import Fulcrum
 from .api import Storage, ApiManager
+from .formats import FORMATS
+
+
+AVAILABLE_FORMATS = list(sorted(FORMATS.keys()))
+
+def valid_format(value):
+    if value in AVAILABLE_FORMATS:
+        return value
+    raise ValueError("Invalid format: {}".format(value))
+
 
 class PyFulcrumApp(App):
     
@@ -28,8 +38,10 @@ class PyFulcrumApp(App):
         parser.add_argument('--dburl', type=str, nargs=1, required=True, help="database connection url")
         parser.add_argument('--apikey', type=str, nargs=1, required=True, help="Fulcrum API key")
         parser.add_argument('--storage', type=str, nargs=1, required=True, help="Storage directory root")
-        parser.add_argument('--format', type=str, nargs=1, required=False, default=('json',),
-                            help="Return format (default: json)")
+        parser.add_argument('--format', type=valid_format, nargs=1, required=False, default=('json',),
+                            help="Return format (default: json, "
+                                 "available: {}). Mind that spatial-aware formatters accept "
+                                 "only record objects.".format(','.join(AVAILABLE_FORMATS))),
         parser.add_argument('--output', type=str, nargs=1, required=False, default=tuple(),
                             help="Name of output file, standard output as default")
         return parser

@@ -6,6 +6,7 @@ import sys
 import json
 import tempfile
 import zipfile
+import csv
 from functools import wraps
 from shapely import wkb
 from osgeo import ogr, osr
@@ -15,18 +16,60 @@ ogr.UseExceptions()
 print_attrs = ('id', 'status', 'name', 'media_type', 'content_type', 'form_id', 'record_id', 'records_count', 'values_processed')
 
 
+def formatter(allowed_classes=None):
+    """
+    Decorator for formatter callable - provides
+    common checks and returns if item passed is
+    empty value.
 
-def formatter(f):
-    @wraps(f)    
-    def _wrap(items, storage, multiple=False):
-        if not items:
-            if multiple:
-                return []
-            return
-        if not multiple:
-            items = [items]
-        return f(items, storage, multiple=multiple)
-    return _wrap
+    @param allowed_classes list of allowed class names
+        that format supports. If ommited, all classes
+        can be used
+
+    usage:
+
+    @formatter()
+    def format_xyz(items, storage, multiple):
+        ...
+
+    or
+
+    @formatter(['Record', 'Media'])
+    def format_xyx(items, storage, multiple):
+        ...
+
+    or
+
+
+    @formatter('Record')
+    def format_xyx(items, storage, multiple):
+        ...
+
+    """
+    def _formatter(f):
+        @wraps(f)    
+        def _wrap(items, storage, multiple=False):
+            if not items:
+                if multiple:
+                    return []
+                return
+            if not multiple:
+                items = [items]
+            if allowed_classes:
+                cls_name = items[0].__class__.__name__
+                if isinstance(allowed_classes, list):
+                    if cls_name not in allowed_classes:
+                        raise TypeError("Cannot use class {} with {}"
+                                        .format(cls_name, f.__name__))
+                else:
+                    if cls_name != allowed_classes:
+                        raise TypeError("Cannot use class {} with {}"
+                                        .format(cls_name, f.__name__))
+                        
+            return f(items, storage, multiple=multiple)
+        return _wrap
+    return _formatter
+
 
 def print_item(obj, storage, output=None):
     if output is None:
@@ -85,7 +128,7 @@ def geojson_item(obj, storage):
     out['properties']['id'] = obj.id
     return out
 
-@formatter
+@formatter()
 def format_str(items, storage, multiple=False):
     out = []
     for item in items:
@@ -97,7 +140,7 @@ def format_str(items, storage, multiple=False):
     return '\n'.join(out)
 
 
-@formatter
+@formatter()
 def format_json(items, storage, multiple=False):
     out = []
     for item in items:
@@ -107,7 +150,7 @@ def format_json(items, storage, multiple=False):
     return json.dumps(out)
 
 
-@formatter
+@formatter()
 def format_raw(items, storage, multiple=False):
     out = []
     for item in items:
@@ -117,7 +160,7 @@ def format_raw(items, storage, multiple=False):
     return json.dumps(out)
 
 
-@formatter
+@formatter('Record')
 def format_geojson(items, storage, multiple=False):
     out = []
     for item in items:
@@ -128,7 +171,40 @@ def format_geojson(items, storage, multiple=False):
         return json.dumps(out[0])
     return json.dumps({'type': 'FeatureCollection', 'features': out})
 
-@formatter
+@formatter()
+def format_csv(items, storage, multiple=False):
+    out = StringIO()
+    w = csv.writer(out, quoting=csv.QUOTE_NONNUMERIC)
+    header = ['id']
+    item_row = items[0]
+    for fname in item_row.payload.keys():
+        # id was already added
+        if fname == 'id': 
+            continue
+
+        # form values is a dictionary, we need to extract each field
+        if fname == 'form_values':
+            for fname, value in item_row.payload['form_values'].items():
+                header.append('field.{}'.format(fname))
+        else:
+            header.append(fname)
+    header = header[:1] + list(sorted(header[1:]))
+    w.writerow(header)
+
+    for item in items:
+        row = [item.id]
+        payload = item.payload
+        for k in header[1:]:
+            if k.startswith('field.'):
+                fname = k[6:]
+                row.append(payload['form_values'][fname])
+            else:
+                row.append(payload[k])
+        w.writerow(row)
+    return out.getvalue()
+
+
+@formatter('Record')
 def format_shapefile(items, storage, multiple=False):
     """
     Output to shapefile as zip
@@ -140,7 +216,7 @@ def format_shapefile(items, storage, multiple=False):
                        use_zip=True)
 
 
-@formatter
+@formatter('Record')
 def format_kml(items, storage, multiple=False):
     """
     Output to shapefile as zip
@@ -237,4 +313,5 @@ FORMATS = {'str': format_str,
            'geojson': format_geojson,
            'shapefile': format_shapefile,
            'kml': format_kml,
+           'csv': format_csv,
            'raw': format_raw}
