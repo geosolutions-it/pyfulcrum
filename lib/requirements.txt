@@ -7,3 +7,4 @@ fulcrum
 cliff
 six
 pygdal
+shapely
