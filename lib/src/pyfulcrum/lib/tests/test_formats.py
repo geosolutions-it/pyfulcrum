@@ -116,7 +116,8 @@ class FormatTestCase(BaseTestCase):
 
         r = self.api_manager.records.get('4e1c33ad-5496-4818-826f-504e66239b4d')
         f = FORMATS['csv']
-        out = StringIO(f(r, self._storage, multiple=False))
+        out = BytesIO(f(r, self._storage, multiple=False))
+        out = StringIO(out.getvalue().decode('utf-8'))
         reader = csv.reader(out)
         rcount = 0
         row = next(reader)

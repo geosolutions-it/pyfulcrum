@@ -5,7 +5,8 @@ import json
 from datetime import datetime
 from sqlalchemy import (Column, Integer, String,
                         DateTime, Numeric, ForeignKey,
-                        JSON, Enum, Boolean)
+                        JSON, Enum, Boolean,
+                        and_)
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
 from sqlalchemy.orm.session import sessionmaker
@@ -149,9 +150,10 @@ class Form(BaseResource):
 
     @classmethod
     def get_q_params(cls, url_params, *args, **kwargs):
+        out = []
         if url_params.get('form_id'):
-            return [cls.id == url_params['form_id']]
-        return []
+            out.append(cls.id == url_params['form_id'])
+        return out
 
 
 # list of available field types from api docs
@@ -284,9 +286,23 @@ class Record(BaseResource):
 
     @classmethod
     def get_q_params(cls, url_params, *args, **kwargs):
+        out = []
         if url_params.get('form_id'):
-            return [cls.form_id == url_params['form_id']]
-        return []
+            out.append(cls.form_id == url_params['form_id'])
+
+        if url_params.get('created_before'):
+            out.append(cls.created_at < url_params['created_before'])
+        if url_params.get('created_since'):
+            out.append(cls.created_at > url_params['created_since'])
+
+        if url_params.get('updated_before'):
+            out.append(cls.updated_at < url_params['updated_before'])
+        if url_params.get('updated_since'):
+            out.append(cls.updated_at > url_params['updated_since'])
+
+        if out:
+            return [and_(*out)]
+        return out
 
 class Value(BaseResource):
     __tablename__ = 'fulcrum_value'

@@ -58,7 +58,13 @@ def formatter(allowed_classes=None):
                 items = [items]
             if allowed_classes:
                 
-                first_item = next(items)
+                try:
+                    is_query = False
+                    first_item = next(items)
+                except TypeError:
+                    is_query = True
+                    first_item = items[0]
+                    items = chain(items)
                 cls_name = first_item.__class__.__name__
                 if isinstance(allowed_classes, list):
                     if cls_name not in allowed_classes:
@@ -69,7 +75,8 @@ def formatter(allowed_classes=None):
                         raise TypeError("Cannot use class {} with {}"
                                         .format(cls_name, f.__name__))
                      
-                items = chain([first_item], items)
+                if not is_query:
+                    items = chain([first_item], items)
             return f(items, storage, multiple=multiple)
         return _wrap
     return _formatter
@@ -180,7 +187,11 @@ def format_csv(items, storage, multiple=False):
     out = StringIO()
     w = csv.writer(out, quoting=csv.QUOTE_NONNUMERIC)
     header = ['id']
-    item_row = next(items)
+    try:
+        item_row = next(items)
+        items = chain([item_row], items)
+    except TypeError:
+        item_row = items[0]
 
     for fname in item_row.payload.keys():
         # id was already added
@@ -196,17 +207,17 @@ def format_csv(items, storage, multiple=False):
     header = header[:1] + list(sorted(header[1:]))
     w.writerow(header)
 
-    for item in chain([item_row], items):
+    for item in items:
         row = [item.id]
         payload = item.payload
         for k in header[1:]:
             if k.startswith('field.'):
                 fname = k[6:]
-                row.append(payload['form_values'][fname])
+                row.append(payload['form_values'].get(fname))
             else:
                 row.append(payload[k])
         w.writerow(row)
-    return out.getvalue()
+    return bytes(out.getvalue(), 'utf-8')
 
 
 @formatter('Record')
@@ -274,7 +285,7 @@ def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use
         for item in chain([item_row], items):
 
             # we don't want to process entries without geometry
-            if not getattr(item, 'point', None):
+            if getattr(item, 'point', None) is None:
                 continue
 
             feat = ogr.Feature(layer.GetLayerDefn())

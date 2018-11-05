@@ -38,6 +38,8 @@ class PyFulcrumApp(App):
         parser.add_argument('--dburl', type=str, nargs=1, required=True, help="database connection url")
         parser.add_argument('--apikey', type=str, nargs=1, required=True, help="Fulcrum API key")
         parser.add_argument('--storage', type=str, nargs=1, required=True, help="Storage directory root")
+        parser.add_argument('--urlbase', type=str, nargs=1, required=False, default=(None,),
+                            help="Web root for storage")
         parser.add_argument('--format', type=valid_format, nargs=1, required=False, default=('json',),
                             help="Return format (default: json, "
                                  "available: {}). Mind that spatial-aware formatters accept "
@@ -58,7 +60,8 @@ class PyFulcrumApp(App):
         opts = self.options
         client = Fulcrum(key=opts.apikey[0])
 
-        self.api_manager = ApiManager(opts.dburl[0], client, {'root_dir': opts.storage[0]})
+        self.api_manager = ApiManager(opts.dburl[0], client, {'root_dir': opts.storage[0],
+                                                              'url_base': opts.urlbase[0]})
 
 
 class _BaseCommand(Command):

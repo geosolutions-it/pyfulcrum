@@ -135,8 +135,8 @@ class BaseObjectManager(object):
         if kwargs.get('url_params'):
             up = kwargs.get('url_params')
             params = self.model.get_q_params(up)
-            return self.session.query(self.model).filter(*params)
-        return self.session.query(self.model).all()
+            return self.session.query(self.model).order_by('updated_at').filter(*params)
+        return self.session.query(self.model).order_by('updated_at').all()
 
     def _list_item(self, item):
         return item
