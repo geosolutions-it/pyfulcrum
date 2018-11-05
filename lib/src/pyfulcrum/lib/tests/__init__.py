@@ -13,8 +13,7 @@ from ..models import Base, Media
 from ..storage import Storage
 
 
-SQLALCHEMY_ENV = 'TEST_DATABASE_URI'
-SQLALCHEMY_CLI = '--test-database-uri'
+SQLALCHEMY_ENV = 'TEST_DB_URL'
 STORAGE_ENV = 'TEST_STORAGE_ROOT'
 
 
@@ -22,20 +21,8 @@ def conn_from_env():
     return os.getenv(SQLALCHEMY_ENV)
 
 
-def conn_from_cli():
-    next_arg = False
-    for arg in sys.argv:
-        if next_arg:
-            return arg
-        if arg == SQLALCHEMY_CLI:
-            next_arg = True
-        elif (arg.startswith('{}='.format(SQLALCHEMY_CLI)) and
-              len(arg) > (len(SQLALCHEMY_CLI)+1)):
-            return arg[len(SQLALCHEMY_CLI)+1:]
-
-
 def get_connection():
-    conn_uri = conn_from_env() or conn_from_cli()
+    conn_uri = conn_from_env()
     if not conn_uri:
         raise ValueError("No db connection string available.\n"
                          "You can pass it as {} env variable."
@@ -43,12 +30,14 @@ def get_connection():
                          )
     return create_engine(conn_uri)
 
+
 def get_storage(**kwargs):
     root_dir = os.getenv(STORAGE_ENV) or\
                 os.path.join(os.path.dirname(__file__),
                              '..', '..', '..', '..',
                              'examples', 'tests')
     return Storage(root_dir=root_dir, **kwargs)
+
 
 RESOURCES = ('projects', 'forms', 'records',
              'audio', 'videos', 'photos',
