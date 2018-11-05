@@ -95,3 +95,13 @@ class FormatTestCase(BaseTestCase):
         out = f(r, self._storage, multiple=True)
         self.assertTrue('Record: id=4e1c33ad-5496-4818-826f-504e66239b4d ' in out)
 
+    def test_format_kml(self):
+    
+        self.api_manager.forms.list(cached=False)
+        self.api_manager.records.list(cached=False)
+        self.api_manager.photos.list(cached=False)
+
+        r = self.api_manager.records.get('4e1c33ad-5496-4818-826f-504e66239b4d')
+        f = FORMATS['kml']
+        out = BytesIO(bytes(f(r, self._storage, multiple=False)))
+        self.assertEqual(out.read(5), b'<?xml')

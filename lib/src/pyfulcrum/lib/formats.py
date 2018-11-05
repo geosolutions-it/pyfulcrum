@@ -128,12 +128,30 @@ def format_geojson(items, storage, multiple=False):
         return json.dumps(out[0])
     return json.dumps({'type': 'FeatureCollection', 'features': out})
 
-
 @formatter
 def format_shapefile(items, storage, multiple=False):
     """
     Output to shapefile as zip
     """
+
+    return _export_ogr(items, storage, multiple,
+                       driver='ESRI Shapefile',
+                       extension='shp',
+                       use_zip=True)
+
+
+@formatter
+def format_kml(items, storage, multiple=False):
+    """
+    Output to shapefile as zip
+    """
+
+    return _export_ogr(items, storage, multiple,
+                       driver='KML',
+                       extension='kml',
+                       use_zip=False)
+
+def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use_zip=False):
     item_class = items[0].__class__.__name__
     item_row = items[0]
     # we don't want to process entries without geometry
@@ -160,10 +178,10 @@ def format_shapefile(items, storage, multiple=False):
         item_idx += 1
         
     basename = '{}s'.format(item_class.lower())
-    outfile = '{}.shp'.format(basename)
+    outfile = '{}.{}'.format(basename, extension)
     zfile = '{}.zip'.format(outfile)
 
-    drv = ogr.GetDriverByName('ESRI Shapefile')
+    drv = ogr.GetDriverByName(driver)
     with tempfile.TemporaryDirectory() as tmpdirname:
         full_path = os.path.join(tmpdirname, outfile)
         data = drv.CreateDataSource(full_path)
@@ -197,20 +215,26 @@ def format_shapefile(items, storage, multiple=False):
             feat.SetGeometry(geom)
             layer.CreateFeature(feat)
         data.Destroy()
-        files = os.listdir(tmpdirname)
-        zfile = os.path.join(tmpdirname, zfile)
 
-        with zipfile.ZipFile(zfile, mode='w') as zf:
-            for fname in files:
-                # no subpath for archive names by using arcname
-                zf.write(os.path.join(tmpdirname, fname), arcname='/{}'.format(fname))
-        
-        with open(zfile, 'rb') as zf:
-            return zf.read()
+        if use_zip:
 
+            files = os.listdir(tmpdirname)
+            zfile = os.path.join(tmpdirname, zfile)
+
+            with zipfile.ZipFile(zfile, mode='w') as zf:
+                for fname in files:
+                    # no subpath for archive names by using arcname
+                    zf.write(os.path.join(tmpdirname, fname), arcname='/{}'.format(fname))
+            
+            with open(zfile, 'rb') as zf:
+                return zf.read()
+        else:
+            with open(full_path, 'rb') as f:
+                return f.read()
 
 FORMATS = {'str': format_str,
            'json': format_json,
            'geojson': format_geojson,
            'shapefile': format_shapefile,
+           'kml': format_kml,
            'raw': format_raw}
