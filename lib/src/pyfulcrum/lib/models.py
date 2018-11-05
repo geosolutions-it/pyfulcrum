@@ -340,7 +340,7 @@ class Value(BaseResource):
             for media_item in values:
                 mkey = media_item[media_key]
                 caption = media_item.get('caption')
-                m = media[mkey]
+                m = media.get(mkey)
                 if m:
                     out['media'].append({'id': m.id,
                                          'caption': caption,
@@ -404,7 +404,6 @@ class Media(BaseResource):
             point = 'POINT({latitude} {longitude})'.format(latitude=f['latitude'],
                                                            longitude=f['longitude'])
         f['point'] = point
-            
         return payload
 
     def get_path(self, storage, size):
