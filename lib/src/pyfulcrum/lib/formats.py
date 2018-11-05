@@ -79,8 +79,10 @@ def geojson_item(obj, storage):
         return
     geom = ogr.CreateGeometryFromWkb(obj.point.data.tobytes())
     out = {'type': 'Feature',
+           'id': obj.id,
            'geometry': json.loads(geom.ExportToJson()),
            'properties': obj.get_values(storage) if hasattr(obj, 'get_values') else obj.payload}
+    out['properties']['id'] = obj.id
     return out
 
 @formatter

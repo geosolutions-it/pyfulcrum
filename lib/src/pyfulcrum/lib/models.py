@@ -330,12 +330,13 @@ class Value(BaseResource):
         # name of key in values list with media id
         media_key = field.media_key
         if media_key:
+
             media = dict((m.id, m) for m in self.record.media_list)
             # iterate over items in value
             values = self.value
             if isinstance(self.value, dict):
                 values = [self.value]
-                
+             
             for media_item in values:
                 mkey = media_item[media_key]
                 caption = media_item.get('caption')

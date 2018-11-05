@@ -28,7 +28,6 @@ class ModelsTestCase(BaseTestCase):
 
         self.assertEqual(len(list(self.api_manager.forms.list())), 0)
         self.assertEqual(len(list(self.api_manager.forms.list(cached=False))), 1)
-
         FIELD_PAYLOAD = json.loads("""
                         {"type": "TextField",
                          "key": "2832",
