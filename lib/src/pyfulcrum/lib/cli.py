@@ -50,7 +50,7 @@ class PyFulcrumApp(App):
 
 
     def initialize_app(self, argv):
-        commands = [List, Get]
+        commands = [List, Get, Delete]
 
         for command in commands:
             self.command_manager.add_command(command.__name__.lower(), command)
@@ -102,6 +102,9 @@ class _BaseCommand(Command):
 
 
 class List(_BaseCommand):
+    """
+    List resources
+    """
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
@@ -133,7 +136,9 @@ class List(_BaseCommand):
             self.write_output(output)
 
 class Get(_BaseCommand):
-
+    """
+    Shows single resource
+    """
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument('id',
@@ -153,7 +158,9 @@ class Get(_BaseCommand):
 
 
 class Delete(_BaseCommand):
-
+    """
+    Removes resource
+    """
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
         parser.add_argument('id',

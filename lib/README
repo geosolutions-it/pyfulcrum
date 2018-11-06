@@ -21,62 +21,217 @@ PyFulcrum requires:
  1. Obtain Fulcrum API key
  1. Create `pyfulcrum` database (with `pyfulcrum` user):
 
-```
-psql -U postgres -c "create user pyfulcrum superuser login password 'pyfulcrum'; create database pyfulcrum owner pyfulcrum;"
-psql -U pyfulcrum -c "create extension postgis;"
-
-```
+    ```
+    psql -U postgres -c "create user pyfulcrum superuser login password 'pyfulcrum'; create database pyfulcrum owner pyfulcrum;"
+    psql -U pyfulcrum -c "create extension postgis;"
+    ```
 
  1. Create directory for storage
 
-```
-mkdir -p /path/to/storage/dir
-```
+    ```
+    mkdir -p /path/to/storage/dir
+    ```
 
  1. Clone PyFulcrum repo
 
-```
-git clone https://github.com/geosolutions-it/pyfulcrum.git
-```
+    ```
+    git clone https://github.com/geosolutions-it/pyfulcrum.git
+    ```
 
  1. Enter `lib` direcotry and create venv
-```
-cd lib
-python3 -m venv venv
-```
+
+    ```
+    cd lib
+    python3 -m venv venv
+    ```
 
  1. Obtain gdal version and install according version of pygdal (see https://github.com/nextgis/pygdal):
 
-```
-gdal-config --version
-venv/bin/pip install pygdal==$(gdal-config --version)
-```
+    ```
+    gdal-config --version
+    venv/bin/pip install pygdal==$(gdal-config --version)
+    ```
 
  1. Install dependencies and library:
 
-```
-venv/bin/pip install -r requirements.txt
-venv/bin/pip install -e .
-```
+    ```
+    venv/bin/pip install -r requirements.txt
+    venv/bin/pip install -e .
+    ```
 
  1. Copy `alembic.ini` to `local-db.ini` and replace `sqlalchemy.url` value to value adjusted to your database.
 
-```
-cp alembic.ini local-db.ini
-```
-
-```
-$ cat local-db.ini | grep sqlalchemy
-sqlalchemy.url = postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum
-```
+    ```
+    cp alembic.ini local-db.ini
+    $ cat local-db.ini | grep sqlalchemy
+    sqlalchemy.url = postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum
+    ```
 
  1. Apply migrations
 
-```
-venv/bin/alembic -c local-db.ini upgrade head
-```
+    ```
+    venv/bin/alembic -c local-db.ini upgrade head
+    ```
 
 ## Usage
+
+PyFulcrum provides simple cli interface to fetch and access data. Access can be in various formats:
+
+ * str - plain string dump of basic object data, works with all resource types
+ * csv - dumps payload keys as columns and values as rows, works with all resource types
+ * raw - dumps raw payload for objects, works with all resource types
+ * json - dumps basic data about objects, works with all resources
+ * geojson - dumps payload data as properties, works with records only, will return records with points attached
+ * shapefile - dumps payload data as properties, works with records only, will return records with points attached
+ * kml - dumps payload data as properties, works with records only, will return records with points attached
+
+CLI interface is available through `pyfulcrum` command (usually resides in `venv/bin/` directory). Invocation requires few mandatory params provided:
+
+ * Fulcrum API key
+ * database URL
+ * root path to storage
+ * (optional) url root for storage webserver
+ * (optional) output format
+ * (optional) output file to which results shoudl be written
+
+Usage syntax and common parameters used by `pyfulcrum`:
+
+```
+usage: pyfulcrum [--version] [-v | -q] [--log-file LOG_FILE] [-h] [--debug]
+                 --dburl DBURL --apikey APIKEY --storage STORAGE
+                 [--urlbase URLBASE] [--format FORMAT] [--output OUTPUT]
+
+  --dburl DBURL        database connection url
+  --apikey APIKEY      Fulcrum API key
+  --storage STORAGE    Storage directory root
+  --urlbase URLBASE    Web root for storage
+  --format FORMAT      Return format (default: json, available:
+                       csv,geojson,json,kml,raw,shapefile,str). Mind that
+                       spatial-aware formatters accept only record objects.
+  --output OUTPUT      Name of output file, standard output as default
+```
+
+Example invocation:
+
+```
+venv/bin/pyfulcrum --dburl=postgres://user:pass@localhost/pyfulcrum --apikey=XXXXxxx --storage=/path/to/storage/ --urlbase=http://statics.server.com/ ..(additional args here)..
+```
+
+To avoid typing commands, you can create shell script wrapper, which will provide required configuration. There's sample script, `lib/examples/scripts/runfulcrum.sh`, which requires environment file (simple KEY=VALUE in each line) with configuration. Sample environment file:
+
+```
+DB_URL=postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum
+TEST_DB_URL=postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum_test
+API_KEY=XXXXXxxxxxxxXXXXXxxxxxxxxXXXXXxxxxxx
+STORAGE_ROOT=/path/to/storage/
+```
+
+You should adjust values and paths in your environment file and `runfulcrum.sh` script to match your deployment.
+
+### Available management commands
+
+`pyfulcrum` command offers several commands that allow to list multiple, retrieve and remove one specific resource. 
+
+
+#### List:
+
+```
+usage: pyfulcrum list [-h] [--cached] [--urlparams URLPARAMS [URLPARAMS ...]]
+                      [--ignore-existing]
+                      resource
+
+List resources
+
+positional arguments:
+  resource              Name of resource to list (projects, forms, records,
+                        values, media)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --cached              Should app fetch data from live API
+  --urlparams URLPARAMS [URLPARAMS ...]
+                        list of name=value pairs of url params to pass to list
+  --ignore-existing     Should app fetch only data that are not in local
+                        database
+```
+
+Sample invocations:
+
+* list all forms available from API (they will be fetched and saved in db):
+
+```
+./runfulcrum.sh list forms
+```
+
+* list all forms available stored in db:
+
+```
+./runfulcrum.sh list forms --cached
+```
+
+* list all forms available in API but not in db:
+
+```
+./runfulcrum.sh list forms --ignore-existing
+```
+
+* list all records in shapefile format with output to file
+
+```
+./runfulcrum.sh list records --cached --format shapefile --output records.shp.zip
+```
+
+
+`--urlparams URLPARAMS` param is a way to provide filtering query for both API call and cached resources. This is interpreted per-resource type, so forms can have different url params than records. Multiple params are allowed, as a list of params separated with space, i.e.: `--urlparams param1=value param2=othervalue`. In case of multiple params, they're used with operator `AND`.
+
+Below is a list of resources and accepted url params:
+
+ Resource type | URL params | meaning 
+ --- | --- | --- 
+ `forms` | `form_id` | filter list to show only form with specific id. equivalent of `get` command 
+ `records` | `form_id` | Get records only ones related to specific form 
+ | | `created_before` |  Return records that were created before specific timestamp 
+ | | `created_since` | Returns records that were created from timestamp to now 
+ | | `updated_before` | Returns records updated before specific timestamp 
+ | | `updated_since` | Returns records updated after specific timestamp 
+
+#### Get:
+
+```
+usage: pyfulcrum get [-h] [--cached] resource id
+
+Shows single resource
+
+positional arguments:
+  resource    Name of resource to list (projects, forms, records, values,
+              media)
+  id          ID of resource to get
+
+optional arguments:
+  -h, --help  show this help message and exit
+  --cached    Should app fetch data from live API
+
+```
+
+Sample invocations:
+
+* Get specific form cached, with str (simple) format
+
+```
+$ ./runfulcrum.sh get forms dd7449cc-ef64-456f-9dc5-f2eca4afc07d --cached --format str
+ 
+Form: id=dd7449cc-ef64-456f-9dc5-f2eca4afc07d name=test app records_count=4
+```
+
+* Get record in geojson format:
+
+$ ./runfulcrum.sh get records b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb --cached --format geojson
+{"type": "Feature", "id": "b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb", "geometry": {"type": "Point", "coordinates": [30.9502958, 20.2896016]}, "properties": {"deweeee": {"key": "0f50", "description": null, "label": "deweeee", "type": "TextField", "value": "Hdhj", "media": []}, "eeeee": {"key": "c2aa", "description": null, "label": "eeeee", "type": "YesNoField", "value": "yes", "media": []}, "ewrewerw": {"key": "aeb7", "description": null, "label": "ewrewerw", "type": "TextField", "value": "8688", "media": []}, "qwqwq": {"key": "4e91", "description": null, "label": "qwqwq", "type": "ChoiceField", "value": {"other_values": [], "choice_values": ["cccc", "ddd"]}, "media": []}, "Photos": {"key": "ac03", "description": null, "label": "Photos", "type": "PhotoField", "value": [{"photo_id": "05e61326-9046-4df4-9478-40e94b10414e", "caption": null}], "media": [{"id": "05e61326-9046-4df4-9478-40e94b10414e", "caption": null, "type": "photo", "paths": {"large": {"path": "/storage/dd7449cc-ef64-456f-9dc5-f2eca4afc07d/b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb/photo_large", "url": null}, "thumbnail": {"path": "/storage/dd7449cc-ef64-456f-9dc5-f2eca4afc07d/b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb/photo_thumbnail", "url": null}, "original": {"path": "/storage/dd7449cc-ef64-456f-9dc5-f2eca4afc07d/b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb/photo_original", "url": null}}}]}, "id": "b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb"}}
+
+```
+
+
+## Storage structure
 
 
 ## Notes
