@@ -89,7 +89,7 @@ client = Fulcrum(FULCRUM_API_KEY)
 api = ApiManager(DB_URL, client, {'root_dir': STORAGE_ROOT_DIR, 'url_base': STORAGE_URL_LOCATION})
 ```
 
-### ApiManager usage
+### ApiManager
 
 `ApiManager` instance offers properties for each resource types: `.forms`, `.records`, `.projects`, `.photos`, `.videos`, `.audio`, `.signatures`. Each resource has two main methods: `.get(obj_id, cached=True)` and `.list(cached=True, url_params=None, use_generator=True, ignore_existing=False)`.
 
@@ -119,6 +119,11 @@ forms = api.forms.list()
 ```
 records = api.records.list(url_params={'form_id': FORM_ID})
 ```
+#### Resource classes
+
+`ApiManager`'s resources methods returns approperiate resource class (Project, Form, Record, Media) or iterable (list, generator or Query, depending on input parameters) of resource classes.
+
+
 ## PyFulcrum CLI
 
 PyFulcrum provides simple cli interface to fetch and access data. Access can be in various formats:
@@ -274,6 +279,7 @@ Form: id=dd7449cc-ef64-456f-9dc5-f2eca4afc07d name=test app records_count=4
 ```
 $ ./runfulcrum.sh get records b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb --cached --format geojson
 {"type": "Feature", "id": "b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb", "geometry": {"type": "Point", "coordinates": [30.9502958, 20.2896016]}, "properties": {"deweeee": {"key": "0f50", "description": null, "label": "deweeee", "type": "TextField", "value": "Hdhj", "media": []}, "eeeee": {"key": "c2aa", "description": null, "label": "eeeee", "type": "YesNoField", "value": "yes", "media": []}, "ewrewerw": {"key": "aeb7", "description": null, "label": "ewrewerw", "type": "TextField", "value": "8688", "media": []}, "qwqwq": {"key": "4e91", "description": null, "label": "qwqwq", "type": "ChoiceField", "value": {"other_values": [], "choice_values": ["cccc", "ddd"]}, "media": []}, "Photos": {"key": "ac03", "description": null, "label": "Photos", "type": "PhotoField", "value": [{"photo_id": "05e61326-9046-4df4-9478-40e94b10414e", "caption": null}], "media": [{"id": "05e61326-9046-4df4-9478-40e94b10414e", "caption": null, "type": "photo", "paths": {"large": {"path": "/storage/dd7449cc-ef64-456f-9dc5-f2eca4afc07d/b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb/photo_large", "url": null}, "thumbnail": {"path": "/storage/dd7449cc-ef64-456f-9dc5-f2eca4afc07d/b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb/photo_thumbnail", "url": null}, "original": {"path": "/storage/dd7449cc-ef64-456f-9dc5-f2eca4afc07d/b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb/photo_original", "url": null}}}]}, "id": "b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb"}}
+```
 
 ## Storage
 
