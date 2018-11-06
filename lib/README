@@ -73,7 +73,53 @@ PyFulcrum requires:
     venv/bin/alembic -c local-db.ini upgrade head
     ```
 
-## Usage
+## PyFulcrum API
+
+PyFulcrum is a library containing several components: database models which store objects from Fulcrum API with basic metadata, API Manager layer, which acts as a gateway API and transparent cache for Fulcrum API objects, CLI application and formatters which allow to export data in different formats.
+
+In day-to-day usage, you should use PyFulcrum API through `pyfulcrum.lib.api.APIManager` class:
+
+### ApiManager creation
+
+```
+from fulcrum import Fulcrum
+from pyfulcrum.lib.api import ApiManager
+
+client = Fulcrum(FULCRUM_API_KEY)
+api = ApiManager(DB_URL, client, {'root_dir': STORAGE_ROOT_DIR, 'url_base': STORAGE_URL_LOCATION})
+```
+
+### ApiManager usage
+
+`ApiManager` instance offers properties for each resource types: `.forms`, `.records`, `.projects`, `.photos`, `.videos`, `.audio`, `.signatures`. Each resource has two main methods: `.get(obj_id, cached=True)` and `.list(cached=True, url_params=None, use_generator=True, ignore_existing=False)`.
+
+
+Sample usage:
+
+ * get list of photos for given form from API
+
+```
+photos = api.photos.list(url_params={'form_id': FORM_ID}, cached=False)
+```
+
+ * get list of photos that are not added to database yet (`ignore_existing=True` doesn't work with `cached=True` flag set).
+
+```
+new_photos = api.photos.list(cached=False, ignore_existing=True)
+```
+
+ * get list of all stored forms:
+
+```
+forms = api.forms.list()
+```
+
+ * get list of all records stored for a form:
+
+```
+records = api.records.list(url_params={'form_id': FORM_ID})
+```
+## PyFulcrum CLI
 
 PyFulcrum provides simple cli interface to fetch and access data. Access can be in various formats:
 
@@ -225,13 +271,36 @@ Form: id=dd7449cc-ef64-456f-9dc5-f2eca4afc07d name=test app records_count=4
 
 * Get record in geojson format:
 
+```
 $ ./runfulcrum.sh get records b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb --cached --format geojson
 {"type": "Feature", "id": "b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb", "geometry": {"type": "Point", "coordinates": [30.9502958, 20.2896016]}, "properties": {"deweeee": {"key": "0f50", "description": null, "label": "deweeee", "type": "TextField", "value": "Hdhj", "media": []}, "eeeee": {"key": "c2aa", "description": null, "label": "eeeee", "type": "YesNoField", "value": "yes", "media": []}, "ewrewerw": {"key": "aeb7", "description": null, "label": "ewrewerw", "type": "TextField", "value": "8688", "media": []}, "qwqwq": {"key": "4e91", "description": null, "label": "qwqwq", "type": "ChoiceField", "value": {"other_values": [], "choice_values": ["cccc", "ddd"]}, "media": []}, "Photos": {"key": "ac03", "description": null, "label": "Photos", "type": "PhotoField", "value": [{"photo_id": "05e61326-9046-4df4-9478-40e94b10414e", "caption": null}], "media": [{"id": "05e61326-9046-4df4-9478-40e94b10414e", "caption": null, "type": "photo", "paths": {"large": {"path": "/storage/dd7449cc-ef64-456f-9dc5-f2eca4afc07d/b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb/photo_large", "url": null}, "thumbnail": {"path": "/storage/dd7449cc-ef64-456f-9dc5-f2eca4afc07d/b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb/photo_thumbnail", "url": null}, "original": {"path": "/storage/dd7449cc-ef64-456f-9dc5-f2eca4afc07d/b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb/photo_original", "url": null}}}]}, "id": "b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb"}}
 
-```
+## Storage
+
+Storage handling is fairly simple. What is needed is a dedicated directory, to which files will be written. Optionally, storage can be exposed by http server, then you need to provide urlbase under which static files will be served.
+
+Files are stored from the root of storage, in following path template: `${form_id}/${media_id}/${media_type}_${media_size}`. 
+
+`media_type` is a name of media, can be one of: `video`, `photo`, `audio` or `signature`.
+
+`media_size` is name of size for processed file. Each media file comes in several sizes, like several types of thumbnails. Depending on type of resource, sizes list can vary, but each media type has at least `original` size. Below is a list of media types and list of media sizes:
 
 
-## Storage structure
+ | Media type  | Media size |
+ | ----------- | ---------- |
+ | `video`     | `thumbnail_small`, `thumbnail_medium`, |
+ |             | `thumbnail_large`, `thumbnail_huge`, |
+ |             | `thumbnail_small_square`, |
+ |             | `thumbnail_medium_square`, |
+ |             | `thumbnail_large_square`, |
+ |             | `thumbnail_huge_square`, |
+ |             | `small`, `medium`, |
+ |             | `original` |
+ | `photo`     | `large`, `thumbnail`, `original` |
+ | `signature` | `large`, `thumbnail`, `original` |
+ | `audio`     | `small`, `medium`, `original` |
+
+Because multiple versions of media files are stored, it's important to provide sufficient amount of free space for storage.
 
 
 ## Notes

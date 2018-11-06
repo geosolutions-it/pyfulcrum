@@ -63,9 +63,11 @@ class BaseObjectManager(object):
             return self.model.from_payload(data, self.session, self.client, self.storage)
         return self.model.get(obj_id, session=self.session)
 
-    def delete(self, cached=True, *args, **kwargs):
-        self.session.delete(self)
-        return self
+    def delete(self, obj_id, cached=True, *args, **kwargs):
+        obj = self.get(obj_id, cached=True)
+        self.session.delete(obj)
+        self.session.flush()
+        return obj
 
     def list(self, cached=True, generator=False, ignore_existing=False, *args, **kwargs):
         """

@@ -72,24 +72,77 @@ class BaseResource(Base):
 
     @classmethod
     def get(cls, id, session):
+        """
+        Return BaseResource instance with given id or None.
+
+        @param id object pk
+        @param session SQLAlchemy session
+
+        """
         s = session 
         return s.query(cls).filter(cls.id == id).first()
 
     @classmethod
     def exists(cls, id, session):
+        """
+        Returns True if there's resource for given id.
+
+        @param id object pk
+        @param session SQLAlchemy session
+        """
         s = session
         return s.query(cls.query.filter(cls.id == id).exists()).scalar()
 
     @classmethod
     def _post_payload(cls, instance, payload, session, client, storage):
+        """
+        Hook to process instance created/updated with .from_payload().
+        Payload can be changed in-place, it won't be saved after this point.
+        Subclass can override default implementation.
+
+        @param instance existing instance of resource
+        @param payload dict with JSON payload from Fulcrum API
+        @param session SQLAlchemy session
+        @param client Fulcrum API client instance
+        @param storage pyfulcrum.lib.storage.Storage instance
+        """
         pass
 
     @classmethod
     def _pre_payload(cls, payload, session, client, storage):
+        """
+        Hook to process payload before creating/updating instance with
+        .from_payload(). Modified payload should be returned from this
+        method.
+        Subclass can override default implementation.
+
+        @param payload dict with JSON payload from Fulcrum API
+        @param session SQLAlchemy session
+        @param client Fulcrum API client instance
+        @param storage pyfulcrum.lib.storage.Storage instance
+        """
         return payload
 
     @classmethod
     def from_payload(cls, payload, session, client, storage):
+        """
+        Entry point method for creating/updating instances from
+        Fulcrum API payload.
+        
+        Payload will be processed and each field in MAPPED_COLUMNS
+        will be populated based on source field.
+
+        Internally, some pre/postprocessing can be done with
+        _pre_payload()/_post_payload() methods in subclasses.
+        This method should not be overriden by subclass.
+
+        @param payload dict with JSON payload from Fulcrum API
+        @param session SQLAlchemy session
+        @param client Fulcrum API client instance
+        @param storage pyfulcrum.lib.storage.Storage instance
+        
+        @returns BaseResource instance
+        """
         s = session
 
         # hook for preprocessing class-specific payload
@@ -117,6 +170,10 @@ class BaseResource(Base):
 
 
 class Project(BaseResource):
+    """
+    Fulcrum API Project
+    see: https://developer.fulcrumapp.com/endpoints/projects/
+    """
     __tablename__ = 'fulcrum_project'
     name = Column(String, index=True)
     description = Column(String(1024))
@@ -124,6 +181,10 @@ class Project(BaseResource):
 
 
 class Form(BaseResource):
+    """
+    Fulcrum API Form
+    see: https://developer.fulcrumapp.com/endpoints/forms/
+    """
     __tablename__ = 'fulcrum_form'
     name = Column(String, index=True)
     description = Column(String(1024))
@@ -134,10 +195,16 @@ class Form(BaseResource):
 
     @property
     def records_count(self):
+        """
+        Returns number of records for this form.
+        """
         return len(self.records)
 
     @classmethod
     def _post_payload(cls, instance, payload, session, client, storage):
+        """
+        Create field definitions from form's data.
+        """
         # here we should process fields
         # but first, we need to add this form to db
         session.add(instance)
@@ -188,10 +255,14 @@ class Field(BaseResource):
                       )
 
     def __str__(self):
-        return 'Field({}, label={}, type={}, description={})'.format(self.id, self.label, self.type, self.description)
+        return 'Field({}, label={}, type={}, description={})'.format(self.id,
+                                                                     self.label,
+                                                                     self.type,
+                                                                     self.description)
     
     @classmethod
     def _pre_payload(cls, payload, session, client, storage):
+        # created_at is not populated anywhere, we'll use current timestamp.
         payload['created_at'] = payload['updated_at'] =\
          datetime.utcnow().strftime(DATE_FORMAT)
         return payload
@@ -206,6 +277,14 @@ class Field(BaseResource):
 
     @property
     def media_key(self):
+        """
+        Returns name of field in structure in record or None, if field is not media-type.
+
+        Media field values contain id of media with media-type
+        specific field, like in
+        [{"photo_id":"a8d1df96-44e5-75e9-7312-7e2c5e902496,"caption": ""}]
+
+        """
         if self.type in ('SignatureField', 'AudioField', 'PhotoField', 'VideoField',):
             return '{}_id'.format(self.type.lower()[:-len('field')])
 
@@ -236,6 +315,10 @@ class Record(BaseResource):
                       )
     
     def get_values(self, storage):
+        """
+        Return dictionary of label -> field value.
+        Each field value is a dictionary from Value.get_value()
+        """
         media = {}
         for m in self.media_list:
             try:
@@ -335,6 +418,24 @@ class Value(BaseResource):
 
 
     def get_value(self, storage):
+        """
+        Returns dictionary with field value information:
+
+        @param storage Storage instance to calculate paths and urls for media files
+
+        * field key (short alphanumeric code)
+        * description of field
+        * label of field
+        * type of field
+        * value
+        * list of media elements related
+
+        Each media data contains:
+        * id of media resource
+        * caption from record
+        * type of media (photo, audio, video, signature)
+        * paths - per-size path/url values
+        """
         field = self.field
         out = {'key': self.field_id,
                'description': field.description,
@@ -423,24 +524,36 @@ class Media(BaseResource):
         return payload
 
     def get_path(self, storage, size):
+        """
+        Returns size-specific path to media file
+        """
         return storage.get_path(self.form_id,
                                 self.record_id,
                                 self.media_type,
                                 size)
 
     def get_common_path(self, storage, size):
+        """
+        Returns common path in storage
+        """
         return storage.get_common_path(self.form_id,
                                        self.record_id,
                                        self.media_type,
                                        size)
 
     def get_url(self, storage, size):
+        """
+        Returns size-specific url to media file
+        """
         return storage.get_url(self.form_id,
                                self.record_id,
                                self.media_type,
                                size)
 
     def get_paths(self, storage):
+        """
+        Return mapping of size->{path, url} for this media.
+        """
         out = {}
         for s in self.SIZES[self.media_type]:
             out[s] = {'path': self.get_path(storage, s),
@@ -448,12 +561,17 @@ class Media(BaseResource):
         return out
 
     def save_to_storage(self, storage, fhandle, size):
-        storage.save(fhandle, self.form_id, self.record_id, self.media_type, size)
+        """
+        Shorthand to store file in storage
+        @param storage Storage instance
+        @param fhandle file-like object
+        @param size name of size to save to
+        """
+        return storage.save(fhandle, self.form_id, self.record_id, self.media_type, size)
 
     @classmethod
     def _post_payload(cls, instance, payload, session, client, storage):
         # handle storage
-
         media_type = payload['media_type']
         sizes = cls.SIZES[media_type]
         for s in sizes:

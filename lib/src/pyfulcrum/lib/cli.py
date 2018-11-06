@@ -50,7 +50,7 @@ class PyFulcrumApp(App):
 
 
     def initialize_app(self, argv):
-        commands = [List, Get, Delete]
+        commands = [List, Get]
 
         for command in commands:
             self.command_manager.add_command(command.__name__.lower(), command)
