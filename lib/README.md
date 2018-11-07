@@ -19,13 +19,6 @@ PyFulcrum requires:
  Installation is simple:
 
  1. Obtain Fulcrum API key
- 1. Create `pyfulcrum` database (with `pyfulcrum` user):
-
-    ```
-    psql -U postgres -c "create user pyfulcrum superuser login password 'pyfulcrum'; create database pyfulcrum owner pyfulcrum;"
-    psql -U pyfulcrum -c "create extension postgis;"
-    ```
-
  1. Create directory for storage
 
     ```
@@ -67,9 +60,11 @@ PyFulcrum requires:
     sqlalchemy.url = postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum
     ```
 
- 1. Apply migrations
+ 1. Create `pyfulcrum` database (with `pyfulcrum` user) and apply database model migrations (this will create required tables in database):
 
     ```
+    psql -U postgres -c "create user pyfulcrum superuser login password 'pyfulcrum'; create database pyfulcrum owner pyfulcrum;"
+    psql -U pyfulcrum -c "create extension postgis;"
     venv/bin/alembic -c local-db.ini upgrade head
     ```
 

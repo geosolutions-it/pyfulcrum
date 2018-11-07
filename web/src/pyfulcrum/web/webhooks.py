@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from flask import Blueprint, render_template, abort, current_app, Response, request
-from jinja2 import TemplateNotFound
+from flask import Blueprint, abort, current_app, Response, request
 
 
 webhooks = Blueprint('pyfulcrum.web.webhooks', __name__)
