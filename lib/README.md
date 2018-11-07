@@ -45,7 +45,7 @@ PyFulcrum requires:
     venv/bin/pip install pygdal==$(gdal-config --version)
     ```
 
- 1. Install dependencies and library:
+ 1. Install dependencies and pyfulcrum library:
 
     ```
     venv/bin/pip install -r requirements.txt
