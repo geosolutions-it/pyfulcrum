@@ -1,0 +1,12 @@
+flask
+PyFulcrum-lib
+# pyfulcrum deps
+sqlalchemy
+psycopg2
+GeoAlchemy2
+alembic
+fulcrum
+cliff
+six
+pygdal
+shapely

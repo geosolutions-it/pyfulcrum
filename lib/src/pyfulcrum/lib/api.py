@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from fulcrum import Fulcrum as FC
 from .models import Session, Base, Project, Form, Record, Media, Field
 from sqlalchemy.engine import Engine, create_engine
 from .storage import Storage
@@ -243,6 +244,8 @@ class ApiManager(object):
         Session.configure(bind=self.db)
         self.session = Session()
         Base.metadata.bind = db
+        if isinstance(client, str):
+            client = FC(client)
         self.client = client
         self.initialize_storage(storage_cfg)
         self.initialize_managers()

@@ -13,37 +13,37 @@ def mpath(path_in):
     return os.path.join(*path_in.split('/'))
 
 setup(
-    name="PyFulcrum-lib",
+    name="PyFulcrum-Webapp",
     version="0.0.1",
     author="GeoSolutions.it/Cezary Statkiewicz",
     author_email="cezary.statkiewicz@geo-solutions.it",
-    description=("Fulcrum Backup module - handles basic I/O of data"),
+    description=("Fulcrum webapp - webhook and api"),
     license="Propertiary",
-    keywords="fulcrum api database",
+    keywords="fulcrum api database webapp webhooks",
     url="https://github.com/geosolutions-it/pyfulcrum/",
-    packages=['pyfulcrum.lib'],
+    packages=['pyfulcrum.web'],
     setup_requires=['pytest-runner'],
     tests_requires=['pytest'],
-    test_packages=['pyfulcrum.lib.tests'],
+    test_packages=['pyfulcrum.web.tests'],
     package_dir={'pyfulcrum': mpath('src/pyfulcrum/'),
-                 'pyfulcrum.lib': mpath('src/pyfulcrum/lib'),
-                 'pyfulcrum.lib.migrations': mpath('src/pyfulcrum/lib/migrations'),
-                 'pyfulcrum.lib.migrations.versions': mpath('src/pyfulcrum/lib/migrations/versions'),
-                 'pyfulcrum.lib.tests': mpath('src/pyfulcrum/lib/tests'),
+                 'pyfulcrum.web': mpath('src/pyfulcrum/web'),
+                 'pyfulcrum.web.migrations': mpath('src/pyfulcrum/web/migrations'),
+                 'pyfulcrum.web.migrations.versions': mpath('src/pyfulcrum/web/migrations/versions'),
+                 'pyfulcrum.web.tests': mpath('src/pyfulcrum/web/tests'),
                  '': 'src'},
-    package_data={'pyfulcrum.lib.migrations': ['src/pyfulcrum/lib/migrations/env',
-                                               'src/pyfulcrum/lib/migrations/README',
-                                               'src/pyfulcrum/lib/migrations/script.py.mako',
+    package_data={'pyfulcrum.web.migrations': ['src/pyfulcrum/web/migrations/env',
+                                               'src/pyfulcrum/web/migrations/README',
+                                               'src/pyfulcrum/web/migrations/script.py.mako',
                                                 ],
                  },
-    long_description=read('README.md'),
+    long_description=read('README'),
     classifiers=[
              "Development Status :: 3 - Alpha",
              "Topic :: Utilities",
              "License :: OSI Approved :: BSD License",
     ],
     entry_points = {'console_scripts': [
-                    'pyfulcrum = pyfulcrum.lib.cli:main'
+                    'pyfulcrum = pyfulcrum.web.cli:main'
                     ]
                     },
 )
