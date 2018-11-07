@@ -159,7 +159,7 @@ class Get(_BaseCommand):
 
 class Remove(_BaseCommand):
     """
-    Removes resource
+    Removes resource from local data (this doesn't update state in Fulcrum API)
     """
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
@@ -181,7 +181,7 @@ class Remove(_BaseCommand):
 
 class ListRemoved(_BaseCommand):
     """
-    List removed resources
+    List locally removed resources
     """
 
     def get_parser(self, prog_name):
@@ -204,7 +204,6 @@ class ListRemoved(_BaseCommand):
             item = mgr.list_removed(url_params=url_params)
             output = api.as_format(format, item, multiple=True)
             self.write_output(output)
-
 
 
 def main():
