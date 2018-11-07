@@ -162,6 +162,11 @@ class BaseObjectManager(object):
         Synchronize local db and remote
         """
         existing = []
+        # this is very naive approach, because .list invocation will only add new
+        # items if they're present in API. It won't mark any items removed. To 
+        # do full synchronization, it should be two-way - first remove items
+        # present locally but not in API, then add items not present locally.
+        # That's why this method is not exposed anywhere.
         self.list(cached=False, ignore_existing=existing)
         
 
@@ -236,7 +241,7 @@ class ApiManager(object):
                 SignatureManager,
                 )
 
-    def __init__(self, db, client, storage_cfg):
+    def __init__(self, db, client, storage):
         if isinstance(db, Engine):
             self.db = db
         else:
@@ -247,7 +252,7 @@ class ApiManager(object):
         if isinstance(client, str):
             client = FC(client)
         self.client = client
-        self.initialize_storage(storage_cfg)
+        self.initialize_storage(storage)
         self.initialize_managers()
 
     def __enter__(self):
@@ -302,6 +307,15 @@ class ApiManager(object):
         if isinstance(cfg, Storage):
             self.storage = cfg
             return
+        if isinstance(cfg, str):
+            elements = cfg.split(';', 1)
+            if not len(elements) in (1,2):
+                raise ValueError('String configuration is invalid')
+            cfg = {}  
+            cfg['root_dir'] = elements.pop(0)
+            if elements:
+                cfg['url_base'] = elements.pop(0)
+
         if not isinstance(cfg, dict):
             raise TypeError("Storage configuration should be a dictionary")
         storage_cfg = {}

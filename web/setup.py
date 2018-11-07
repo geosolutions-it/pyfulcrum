@@ -36,14 +36,14 @@ setup(
                                                'src/pyfulcrum/web/migrations/script.py.mako',
                                                 ],
                  },
-    long_description=read('README'),
+    long_description=read('README.md'),
     classifiers=[
              "Development Status :: 3 - Alpha",
              "Topic :: Utilities",
              "License :: OSI Approved :: BSD License",
     ],
     entry_points = {'console_scripts': [
-                    'pyfulcrum = pyfulcrum.web.cli:main'
+                    'pyfulcrum-web = pyfulcrum.web.main:main'
                     ]
                     },
 )
