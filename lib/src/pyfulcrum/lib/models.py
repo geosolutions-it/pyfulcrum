@@ -591,6 +591,15 @@ class Media(BaseResource):
 
         return payload
 
+    @classmethod
+    def get_q_params(cls, url_params, *args, **kwargs):
+        out = []
+        if url_params.get('form_id'):
+            out.append(cls.form_id == url_params['form_id'])
+        if url_params.get('record_id'):
+            out.append(cls.record_id == url_params['record_id'])
+        return out
+
 
 __all__ = ['Media', 'Value', 'Record', 'Field',
            'Project', 'Form', 'Base', 'Session']

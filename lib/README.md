@@ -375,5 +375,47 @@ Files are stored from the root of storage, in following path template: `${form_i
 
 Because multiple versions of media files are stored, it's important to provide sufficient amount of free space for storage.
 
+## Use case: performing full form backup
+
+In order to do full form backup, series of commands are needed to be executed:
+
+```
+./pyfulcrum.sh list forms
+```
+
+From output you should get ID of form you want to backup. We'll use `FORM_ID` placeholder for that value.
+
+```
+./pyfulcrum.sh list records --urlparams form_id=FORM_ID
+./pyfulcrum.sh list photos --urlparams form_id=FORM_ID
+./pyfulcrum.sh list audio --urlparams form_id=FORM_ID
+./pyfulcrum.sh list videos --urlparams form_id=FORM_ID
+./pyfulcrum.sh list signatures --urlparams form_id=FORM_ID
+```
+
+## Running tests
+
+PyFulcrum library comes with test suite. To run tests, install test-phase dependencies:
+
+```
+venv/bin/pip install -r lib/test-requirements.txt
+```
+
+Tests don't require Fulcrum API key, but require test database to be created, also they will store test media data in `lib/examples/tests` directory. 
+
+Assuming you're using the same database cluster, create `pyfulcrum_test` database for `pyfulcrum` user:
+
+```
+psql -U postgres -c "create database pyfulcrum_test owner pyfulcrum;"
+psql -U pyfulcrum -c "create extension postgis;"
+```
+
+You don't need to run migrations on that database.
+
+Test runner requires database url to be passed as `TEST_DB_URL` environmental variable. Then you can run test suite:
+
+```
+TEST_DB_URL=postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum_test venv/bin/pytest --cov=pyfulcrum.lib
+```
 
 ## Notes
