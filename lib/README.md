@@ -123,6 +123,14 @@ records = api.records.list(url_params={'form_id': FORM_ID})
 
 `ApiManager`'s resources methods returns approperiate resource class (Project, Form, Record, Media) or iterable (list, generator or Query, depending on input parameters) of resource classes.
 
+Each resource class exposes common interface. See `pyfulcrum.lib.models` source for details. Most important elements of BaseResource class (and subclasses) are:
+ 
+ * classmethod `.get(id, session)` retrives object by id (or returns `None` if it doesn't exist)
+ * classmethod `.from_payload(payload, session, client, storage)` creates/updates object from JSON payload from Fulcrum API. 
+ * instancemethod `.delete(session)` will mark object as removed.
+ * `Record.get_values()` returns dictionary with values for given record with media resolved to local files. 
+
+**Note:** that if any value in `Record` is media field and media it's refering is missing, field will return empty value. This is because data comming from Fulcrum API may not be entirely consistent (i.e. media resources may refer records that are not available in API for current user).
 
 ## PyFulcrum CLI
 

@@ -46,7 +46,7 @@ class BaseObjectManager(object):
             raise ValueError("invalid object path: {}".format(self.path))
         return h
 
-    def get(self, obj_id, cached=True):
+    def get(self, obj_id, cached=True, if_deleted=False):
         """
         Retrieve 
         """
@@ -61,13 +61,11 @@ class BaseObjectManager(object):
                 data = data[p]
             data.update(self.default_item_args)
             return self.model.from_payload(data, self.session, self.client, self.storage)
-        return self.model.get(obj_id, session=self.session)
+        return self.model.get(obj_id, session=self.session, if_deleted=if_deleted)
 
-    def delete(self, obj_id, cached=True, *args, **kwargs):
+    def remove(self, obj_id, cached=True, *args, **kwargs):
         obj = self.get(obj_id, cached=True)
-        self.session.delete(obj)
-        self.session.flush()
-        return obj
+        return obj.remove(self.session)
 
     def list(self, cached=True, generator=False, ignore_existing=False, *args, **kwargs):
         """
@@ -82,10 +80,12 @@ class BaseObjectManager(object):
                         instead of list. This will optimize cases when large data sets are going
                         to be returned.
 
-        @param ignore_existing - boolean (default: False) to be used with cached=False. In case
+        @param ignore_existing - boolean (default: False) or list to be used with cached=False. In case
                         both switches are in use, ignore_existing will cause that only items
                         present in Fulcrum API are going to be live-queried, so no existing data
                         update will be performed.
+                        If ignore_existing is a list, existing items will be appended to the list.
+
 
         @param url_params - dict with query params for Fulcrum API client. By default, paging
                         of results is enabled and 50 items per page are expected.
@@ -119,7 +119,7 @@ class BaseObjectManager(object):
                         i = self._list_item(i)
                         # need to process full item payload from .find()
                         # because search() returns partial content
-                        if ignore_existing:
+                        if ignore_existing in (True, []):
                             v = self.get(i[self.identity_key])
                             if v is not None:
                                 if isinstance(ignore_existing, list):
@@ -137,11 +137,24 @@ class BaseObjectManager(object):
         if kwargs.get('url_params'):
             up = kwargs.get('url_params')
             params = self.model.get_q_params(up)
-            return self.session.query(self.model).order_by('updated_at').filter(*params)
-        return self.session.query(self.model).order_by('updated_at').all()
+
+            return self.session.query(self.model).order_by('updated_at').filter(self.model.removed == False).filter(*params)
+        return self.session.query(self.model).order_by('updated_at').filter(self.model.removed == False)
 
     def _list_item(self, item):
         return item
+
+    def list_removed(self, *args, **kwargs):
+        """
+        Return removed items
+        """
+        if kwargs.get('url_params'):
+            up = kwargs.get('url_params')
+            params = self.model.get_q_params(up)
+
+            return self.session.query(self.model).order_by('updated_at').filter(self.model.removed == True).filter(*params)
+        return self.session.query(self.model).order_by('updated_at').filter(self.model.removed == True)
+
 
     def sync(self):
         """

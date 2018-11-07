@@ -62,6 +62,19 @@ class ModelsTestCase(BaseTestCase):
         self.assertEqual(len(list(self.api_manager.records.list())), 0)
         self.assertEqual(len(list(self.api_manager.records.list(cached=False))), 1)
 
+    def test_records_removed(self):
+        forms = self.api_manager.forms.list(cached=False)
+        self.assertEqual(len(list(self.api_manager.records.list())), 0)
+        self.assertEqual(len(list(self.api_manager.records.list(cached=False))), 1)
+        self.api_manager.records.remove("4e1c33ad-5496-4818-826f-504e66239b4d")
+        self.assertEqual(len(list(self.api_manager.records.list(cached=True))), 0)
+        self.assertEqual(len(list(self.api_manager.records.list_removed())), 1)
+
+
+
+
+
+
     def test_media(self):
         self.assertEqual(len(list(self.api_manager.forms.list(cached=False))), 1)
         self.assertEqual(len(list(self.api_manager.records.list(cached=False))), 1)

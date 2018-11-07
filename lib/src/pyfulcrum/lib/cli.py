@@ -50,7 +50,7 @@ class PyFulcrumApp(App):
 
 
     def initialize_app(self, argv):
-        commands = [List, Get]
+        commands = [List, Get, Remove, ListRemoved]
 
         for command in commands:
             self.command_manager.add_command(command.__name__.lower(), command)
@@ -157,7 +157,7 @@ class Get(_BaseCommand):
             self.write_output(output)
 
 
-class Delete(_BaseCommand):
+class Remove(_BaseCommand):
     """
     Removes resource
     """
@@ -174,9 +174,37 @@ class Delete(_BaseCommand):
         with self.app.api_manager as api:
             mgr = api.get_manager(parsed_args.resource[0])
             obj_id = parsed_args.id[0]
-            item = mgr.delete(obj_id)
+            item = mgr.remove(obj_id)
             output = api.as_format(format, item)
             self.write_output(output)
+
+
+class ListRemoved(_BaseCommand):
+    """
+    List removed resources
+    """
+
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        parser.add_argument('--urlparams',
+                            type=self.is_urlparam,
+                            required=False,
+                            nargs='+',
+                            help="list of name=value pairs of url params to pass to list")
+        return parser
+
+    def take_action(self, parsed_args):
+        format = self.app.options.format[0]
+        with self.app.api_manager as api:
+            mgr = api.get_manager(parsed_args.resource[0])
+
+            url_params = {}
+            for un, uv in (parsed_args.urlparams or []):
+                url_params[un] = uv
+            item = mgr.list_removed(url_params=url_params)
+            output = api.as_format(format, item, multiple=True)
+            self.write_output(output)
+
 
 
 def main():

@@ -71,7 +71,7 @@ class BaseResource(Base):
         return []
 
     @classmethod
-    def get(cls, id, session):
+    def get(cls, id, session, if_deleted=False):
         """
         Return BaseResource instance with given id or None.
 
@@ -79,8 +79,10 @@ class BaseResource(Base):
         @param session SQLAlchemy session
 
         """
-        s = session 
-        return s.query(cls).filter(cls.id == id).first()
+        s = session
+        if if_deleted:
+            return s.query(cls).filter(cls.id == id).first()
+        return s.query(cls).filter(cls.removed==False, cls.id == id).first()
 
     @classmethod
     def exists(cls, id, session):
@@ -167,6 +169,12 @@ class BaseResource(Base):
         s.add(existing)
         s.flush()
         return existing
+    
+    def remove(self, session):
+        self.removed = True
+        session.add(self)
+        session.flush()
+        return self
 
 
 class Project(BaseResource):
@@ -198,7 +206,7 @@ class Form(BaseResource):
         """
         Returns number of records for this form.
         """
-        return len(self.records)
+        return len([r for r in self.records if not r.removed])
 
     @classmethod
     def _post_payload(cls, instance, payload, session, client, storage):
