@@ -1,0 +1,171 @@
+# PyFulcrum Web Application
+
+## Introduction
+
+PyFulcrum Web application is a two-component application. One component is webhook receiver that can be configured in Fulcrum to receive updates on specific resources, second is API endpoints from PyFulcrum library exposed through HTTP (only fragment of the whole API), also with media files available. Both parts are available as [Flask Blueprints](http://flask.pocoo.org/docs/1.0/blueprints/#blueprints) objects, so they can be incorporated into bigger application if needed.
+
+### Requirements
+
+* PyFulcrum lib and it's requirements
+* Flask
+* web server to serve statics and web application (nginx + uwsgi are preferred)
+
+
+### Installation
+
+PyFulcrum web application requires working installation of PyFulcrum lib. Following steps assume deployment will be using nginx and uwsgi packages.
+
+1. Pefrorm steps from [PyFulcrum lib installation](https://github.com/geosolutions-it/pyfulcrum/tree/master/lib#installation), using `/usr/local/pyfulcrum` directory as a work directory and `/usr/local/pyfulcrum/htdocs/storage` as storage directory. We will reuse database and virtualenv from that installation.
+
+1. Install PyFulcrum web application requirements and application itself
+
+    ```
+    venv/bin/pip install -r repo/pyfulcrum/web/requirements.txt
+    venv/bin/pip install -e repo/pyfulcrum/web/
+    ```
+
+1. Install uwsgi and nginx packages:
+
+    Debian-derived:
+
+    ```
+    apt-get install uwsgi-plugin-python3 nginx
+    ```
+
+    Or RedHat/CentOS:
+    ```
+    yum install nginx uwsgi-plugin-python3
+    ```
+
+1. Configure web application. Web application requires configuration file to be present and to contain location of storage, Fulcrum API key and database url. See [Web application configuration](#configuration) for details.
+    
+1. Configure uwsgi. UWSGI requires app configuration file. Sample file is in `repo/pyfulcrum/web/files/pyfulcrum-web.ini`. You need to adjust paths, socket location and plugin name if needed.
+    Target location depends on your operating system, but usually Debian-derived systems use `/etc/uwsgi/apps-enabled/` directory to store application configuration, while RH-based use `/etc/uwsgi.d/` for the same purpose. Note that Debian-derived systems usually enforce socket path for uwsgi applications.
+
+1. Configure nginx. Nginx requires vhost configuration file. Sample file is in `repo/pyfulcrum/nginx.site.conf`. You need to adjust `server_name`, `root` and upstream sockets locations to match your deployment. Note that API application doesn't require any authentication, so you may want to enforce user authentication in web server for this purpose. 
+    Target location depends on your operating system, but usually Debian-derived systems use `/etc/nginx/sites-enabled/` directory to store vhost configuration, while RH-based use `/etc/nginx/conf.d` for the same purpose.
+
+1. Restart uwsgi and nginx services:
+
+    ```
+    service uwsgi restart
+    service nginx restart
+    ```
+
+### Configuration
+
+PyFulcrum webapp blueprints require configuration data, which provides database url, path to storage/storage base url and Fulcrum API key. Due to a fact that components are implemented as blueprints, they expect configuration will be provided by application that incorporates them as blueprints. In any case, each blueprint requires specific keys to be present in `current_app.config` mapping.
+
+By default (using `pyfulcrum.web.main` module) Flask application expects configuration to be provided as a file with key=value format, which will be parsed on application load. Each blueprint is indenpendent, so configuration may seem to be repeated. This is however to provide more flexibility in deployment and application composition.
+
+Sample configuration is available in `web/files/config.sample.cfg`.
+
+#### Webhooks configuration
+
+Webhook blueprint allows to handle multiple webhooks. Each webhook has a distinct name, and can point to different location. Name can be any set of chars, and for security reasons (Fulcrum application doesn't provide any means to authenticate webhook call from their side, other than using unique token in webhook URL), it's recommended to use random string. Configuration expects name to be present in webhook config key, so keys are constructed using following template (we'll use `$NAME` as a placeholder for actual name):
+
+```
+WEBHOOK_$NAME_DB="postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum"
+WEBHOOK_$NAME_CLIENT="XXXxxxXXXxxx"
+WEBHOOK_$NAME_STORAGE="/path/to/storage;http://server/storage/"
+```
+
+* `WEBHOOK_$NAME_DB` is database url, similar to one provided in PyFulcrum lib.
+* `WEBHOOK_$NAME_CLIENT` is Fulcrum API key
+* `WEBHOOK_$NAME_STORAGE` is a string containing path to storage and optional base url which is used to serve storage files via HTTP server. Both values are separated with `;` sign. 
+
+Internally, webhook receives `$NAME` as call parameter, then it retrives per-webhook configuration using [pseudo-namespace](http://flask.pocoo.org/docs/1.0/api/#flask.Config.get_namespace) constructed with `WEBHOOK_$NAME_` string. If there's no configuration for given namespace, webhook call will be considered invalid. If configuration exists, it will be processed.
+
+#### API configuration
+
+API blueprint requires similar configuration paris as webhook, although only one API instance is created, so only one configuration key-value set is needed.
+
+```
+API_DB="postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum"
+API_CLIENT="XXXxxxXXXxxx"
+API_STORAGE="/path/to/storage;http://server/storage/"
+```
+
+## Notes
+
+### PyFulcrum webhook application
+
+Webhook receiver allows to synchronize data in your Fulcrum account with local copy. Mind that your Fulcrum plan must enable webhooks (see [developer documentation for details](https://developer.fulcrumapp.com/general/webhooks/).). Follow instructions from Fulcrum to set up webhook there. 
+
+As stated above, there can be several webhook receivers with different configuration. Base webhook url is `/webhook/$name/`, where `$name` is a varying part, and corresponds to `$NAME` part in webhook configuration. So, for example, if you have following configuration:
+
+```
+WEBHOOK_MYWEBHOOK1_DB="postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum"
+WEBHOOK_MYWEBHOOK1_CLIENT="XXXxxxXXXxxx"
+WEBHOOK_MYWEBHOOK1_STORAGE="/path/to/storage;http://my.web.server/storage/"
+```
+
+and web application is deployed under `http://my.web.server`, then your webhook url will be `http://my.web.server/webhook/mywebhook/`.
+
+When webhook is received (see [webhooks documentation](https://developer.fulcrumapp.com/general/webhooks/#events) for details on event types and sample payloads), it's payload is parsed, and two values are extracted: event type (from `type` path) and item id (from `data.id` path). Internally, webhook receiver will call PyFulcrum API client to fetch fresh payload for given item id. Due to limited security around webhook dispatching, payload from webhook is not considered as secure, and so the only reasonable way to validate payload is to fetch object pointed in payload directly from Fulcrum API.
+
+### API
+
+API web application is fairly simple, it's exposes PyFulcrum's library resources list method (`pyfulcrum.lib.api.BaseResource.list`). API will return ONLY CACHED values, no live requests are made to Fulcrum API. If configured properly, media files links should be served by web server as well. 
+Following endpoints are available:
+
+* `/api/forms/` - list of forms
+* `/api/records/` - list of records
+* `/api/projects/` - list of projects
+* `/api/photos/` - list of photos
+* `/api/videos/` - list of videos
+* `/api/audio/` - list of audio
+* `/api/signatures/` - list of signatures
+
+
+Each endpoint can be served in varions formats. Format can be controlled by setting `format` query param. By default, `json` format is used. Data can be retrived in several formats:
+
+* `raw` - Raw Fulcrum API payload for objects stored.
+* `json` - PyFulcrum-flavor of JSON for objects stored. This will contain processed media links.
+* `csv` - Returns CSV with all objects for resource, and it doesn't support paging.
+* `geojson` - This will return `GeoJSON` `FeatureCollection` with records that have proper spatial location set. Note, this will work only for `/api/records`.
+* `kml` - This will return `KML` format with records that have proper spatial location set. Note, this will work only for `/api/records`, and it doesn't support paging.
+* `shp` - this will return `ESRI Shapefile` format with records that have proper spatial location set. Note, this will work only for `/api/records`, and it doesn't support paging.
+
+Additionally, each endpoint supports (excluding various exceptions) paging with following query params:
+
+* `page` - 0-based page number index (default: `0`)
+* `per_page` - number of items per page. Default is `50`.
+
+Response, if any json is used, usually comes within following envelope:
+
+```
+{"page": 0,
+ "per_page": 50,
+ "total_pages": 123,
+ "items": []}
+```
+
+With exception for `GeoJSON`, which will return items as `FeaturesCollection` key.
+
+
+##### Examples:
+
+* retrive list of forms as Fulcrum API payload:
+
+```
+GET http://your.server/api/forms?format=raw
+```
+
+* retrive list of records as Fulcrum API payload for given form:
+
+```
+GET http://your.server/api/records?format=raw&form_id=xxxxXXXxxxx
+```
+
+* retrive list of records as Fulcrum API payload for given form, 10th page (indexed from 0):
+
+```
+GET http://your.server/api/records?format=raw&form_id=xxxxXXXxxxx&page=9
+```
+
+* retrive list of records as shapefile for given form:
+
+```
+GET http://your.server/api/records?format=shp&form_id=xxxxXXXxxxx
+```

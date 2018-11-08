@@ -126,7 +126,7 @@ class BaseResource(Base):
         return payload
 
     @classmethod
-    def from_payload(cls, payload, session, client, storage):
+    def from_payload(cls, payload, session, client, storage, reset_removed=True):
         """
         Entry point method for creating/updating instances from
         Fulcrum API payload.
@@ -160,12 +160,13 @@ class BaseResource(Base):
             else:
                 msrc = mdest = m
             setattr(existing, mdest, payload[msrc])
-
         # hook for subclasses
         # also, should clean payload
         cls._post_payload(existing, payload, s, client, storage)
 
         existing.payload = payload
+        if reset_removed:
+            existing.removed = False
         s.add(existing)
         s.flush()
         return existing
@@ -538,7 +539,8 @@ class Media(BaseResource):
         return storage.get_path(self.form_id,
                                 self.record_id,
                                 self.media_type,
-                                size)
+                                size,
+                                self.content_type)
 
     def get_common_path(self, storage, size):
         """
@@ -547,7 +549,8 @@ class Media(BaseResource):
         return storage.get_common_path(self.form_id,
                                        self.record_id,
                                        self.media_type,
-                                       size)
+                                       size,
+                                       self.content_type)
 
     def get_url(self, storage, size):
         """
@@ -556,7 +559,8 @@ class Media(BaseResource):
         return storage.get_url(self.form_id,
                                self.record_id,
                                self.media_type,
-                               size)
+                               size,
+                               self.content_type)
 
     def get_paths(self, storage):
         """
@@ -575,7 +579,7 @@ class Media(BaseResource):
         @param fhandle file-like object
         @param size name of size to save to
         """
-        return storage.save(fhandle, self.form_id, self.record_id, self.media_type, size)
+        return storage.save(fhandle, self.form_id, self.record_id, self.media_type, size, self.content_type)
 
     @classmethod
     def _post_payload(cls, instance, payload, session, client, storage):

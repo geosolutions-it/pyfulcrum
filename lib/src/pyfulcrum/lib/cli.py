@@ -131,7 +131,8 @@ class List(_BaseCommand):
             items = mgr.list(cached=parsed_args.cached,
                              generator=True,
                              ignore_existing=parsed_args.ignore_existing,
-                             url_params=url_params)
+                             url_params=url_params,
+                             flush=True)
             output = api.as_format(format, items, multiple=True)
             self.write_output(output)
 

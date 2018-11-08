@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
+
 from flask import Blueprint, abort, current_app, Response, request
 from pyfulcrum.lib.api import ApiManager
 
 
+log = logging.getLogger(__name__)
 webhooks = Blueprint('pyfulcrum.web.webhooks', __name__)
 
 @webhooks.route('/webhook/<name>/', methods=['POST'])
@@ -14,10 +17,12 @@ def webhook_in(name):
 
     This view will 
     """
+    if not request.data:
+        return Response('empty payload')
     payload = request.json
     if not payload:
         abort(400)
-    ptype = payload['type'];
+    ptype = payload['type']
     if not (ptype.startswith('form.') or ptype.startswith('record.')):
         return Response('cannot handle {} event type'.format(ptype))
     res_name, res_action = ptype.split('.')
@@ -25,11 +30,14 @@ def webhook_in(name):
 
     # this can be called outside web process, with task queue
     fulcrum_call(name, res_name, res_action, res_id)
-
+    return Response('ok')
 
 def fulcrum_call(config_name, res_name, res_action, res_id):
     # any intermediate actions here
-    return _handle_webhook(config_name, res_name, res_action, res_id)
+    try:
+        return _handle_webhook(config_name, res_name, res_action, res_id)
+    except Exception as err:
+        log.warning("Cannot process event %s.%s for id %s in %s webhook: %s", res_name, res_action, res_id, config_name, err, exc_info=err)
 
 def _handle_webhook(config_name, res_name, res_action, res_id):
     """
@@ -56,6 +64,6 @@ def _handle_webhook(config_name, res_name, res_action, res_id):
 
         mgr = api_manager.get_manager(res_name)
         if res_action == 'delete':
-            mgr.delete(res_id)
+            mgr.remove(res_id)
         else:
             mgr.get(res_id, cached=False)

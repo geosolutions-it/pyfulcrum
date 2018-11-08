@@ -1,4 +1,4 @@
-# PyFulcrum
+# PyFulcrum library
 
 ## Introduction
 
@@ -25,16 +25,23 @@ PyFulcrum requires:
     mkdir -p /path/to/storage/dir
     ```
 
- 1. Clone PyFulcrum repo
+ 1. Create work directory, for example `/usr/local/pyfulcrum`, enter into that directory. This will be our default work directory in steps below. If not stated otherwise, you should execute commands from this directory.
+
+ 1. Create deployment directory structure (you can adjust this to your needs in your deployment; following is a good-practice structure):
+
+    ```
+    mkdir -p {repo,conf,storage}
+    ```
+
+ 1. Enter into `repo` dir and clone PyFulcrum repo
 
     ```
     git clone https://github.com/geosolutions-it/pyfulcrum.git
     ```
 
- 1. Enter `lib` direcotry and create venv
+ 1. Enter into work directory, and create venv with python 3.x:
 
     ```
-    cd lib
     python3 -m venv venv
     ```
 
@@ -48,15 +55,15 @@ PyFulcrum requires:
  1. Install dependencies and pyfulcrum library:
 
     ```
-    venv/bin/pip install -r requirements.txt
-    venv/bin/pip install -e .
+    venv/bin/pip install -r repo/pyfulcrum/lib/requirements.txt
+    venv/bin/pip install -e repo/pyfulcrum/lib/
     ```
 
- 1. Copy `alembic.ini` to `local-db.ini` and replace `sqlalchemy.url` value to value adjusted to your database.
+ 1. Copy `repo/pyfulcrum/lib/alembic.ini` to `repo/pyfulcrum/lib/local-db.ini`, replace `sqlalchemy.url` value to value adjusted to your database.
 
     ```
-    cp alembic.ini local-db.ini
-    $ cat local-db.ini | grep sqlalchemy
+    cp repo/pyfulcrum/lib/alembic.ini repo/pyfulcrum/lib/local-db.ini
+    $ cat conf/local-db.ini | grep sqlalchemy
     sqlalchemy.url = postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum
     ```
 

@@ -8,6 +8,8 @@ from .storage import Storage
 from .formats import FORMATS
 
 
+PER_PAGE = 50
+
 class BaseObjectManager(object):
     """
     Base class for API object managers. Base class
@@ -20,7 +22,6 @@ class BaseObjectManager(object):
     default_item_args = {}
     # default values for client.seach()
     default_search_args = {}
-    PER_PAGE = 50
     # identity key in item
     identity_key = 'id'
 
@@ -68,7 +69,7 @@ class BaseObjectManager(object):
         obj = self.get(obj_id, cached=True)
         return obj.remove(self.session)
 
-    def list(self, cached=True, generator=False, ignore_existing=False, *args, **kwargs):
+    def list(self, cached=True, generator=False, ignore_existing=False, flush=False, *args, **kwargs):
         """
         Return list of resources.
         This will return list or generator of resources in local db.
@@ -101,8 +102,9 @@ class BaseObjectManager(object):
                 # we reach last page.
                 url_params = kwargs.get('url_params') or {}
                 url_params.update(self.default_search_args)
-                url_params['per_page'] = self.PER_PAGE
-                page = url_params.get('page') or 0
+                url_params['per_page'] = PER_PAGE
+                _page = url_params.get('page')
+                page = _page or 0
                 url_params['page'] = page
                 kwargs['url_params'] = url_params
 
@@ -112,7 +114,8 @@ class BaseObjectManager(object):
                 while page < total_pages:
                     _items = self._handler.search(*args, **kwargs)
                     items = _items[self.path]
-                    total_pages = _items['total_pages']
+                    if not _page:
+                        total_pages = _items['total_pages']
                     # sanity checks
                     if not items:
                         break
@@ -127,6 +130,8 @@ class BaseObjectManager(object):
                                     ignore_existing.append(i[self.identity_key])
                                 continue
                         v = self.get(i[self.identity_key], cached=False)
+                        if flush:
+                            self.session.commit()
                         yield v
                     page +=1
                     url_params['page'] = page
@@ -138,7 +143,6 @@ class BaseObjectManager(object):
         if kwargs.get('url_params'):
             up = kwargs.get('url_params')
             params = self.model.get_q_params(up)
-
             return self.session.query(self.model).order_by('updated_at').filter(self.model.removed == False).filter(*params)
         return self.session.query(self.model).order_by('updated_at').filter(self.model.removed == False)
 
@@ -286,13 +290,17 @@ class ApiManager(object):
 
     def get_projects_cached(self):
         return self.session.query(Project).all()
+    
+    @classmethod
+    def get_manager_names(cls):
+        out = []
+        for el_cls in cls.MANAGERS:
+            out.append(el_cls.get_name())
+        return out
 
     @property
     def manager_names(self):
-        out = []
-        for el_cls in self.MANAGERS:
-            out.append(el_cls.get_name())
-        return out
+        return ApiManager.get_manager_names()
 
     def get_manager(self, mgr_name):
         return getattr(self, mgr_name)
