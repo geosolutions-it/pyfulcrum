@@ -29,8 +29,10 @@ class FormatConverter(BaseConverter):
     Allows to validate output format
     """
     formats = ('json', 'raw', 'geojson', 'csv', 'kml', 'shp',)
-    def to_python(self, value):
-        if value in self.formats:
+
+    @classmethod
+    def to_python(cls, value):
+        if value in cls.formats:
             return value
         raise ValidationError()
 
@@ -56,7 +58,7 @@ def list_resources(resource_name):
     # format can be controlled with extension or format=X query param. query param
     # has precedense over extension.
     try:
-        format = FormatConverter().to_python(request.args.get('format'))
+        format = FormatConverter.to_python(request.args.get('format'))
     except ValidationError:
         format = 'json'
 
@@ -94,6 +96,9 @@ def list_resources(resource_name):
             
 
         elif format == 'geojson':
+            if resource_name != 'records':
+                abort(400)
+
             features = {'type': 'FeaturesCollection',
                         'features': [geojson_item(r, api_manager.storage) for r in 
                                      paged],

@@ -138,10 +138,11 @@ Response, if any json is used, usually comes within following envelope:
 {"page": 0,
  "per_page": 50,
  "total_pages": 123,
+ "total": 6150,
  "items": []}
 ```
 
-With exception for `GeoJSON`, which will return items as `FeaturesCollection` key.
+With exception for `GeoJSON`, which will return items as `features` key.
 
 
 ##### Examples:
