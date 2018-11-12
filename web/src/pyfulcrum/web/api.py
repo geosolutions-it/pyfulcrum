@@ -76,7 +76,6 @@ def list_resources(resource_name):
         paged = q.offset(page * per_page).limit(per_page)
 
         if format == 'json':
-
             out = {'items': [json_item(r, api_manager.storage) for r in paged],
                    'total': count,
                    'per_page': per_page,

@@ -3,6 +3,7 @@
 
 import logging
 
+from werkzeug.exceptions import HTTPException
 from flask import Blueprint, abort, current_app, Response, request
 from pyfulcrum.lib.api import ApiManager
 
@@ -14,28 +15,37 @@ webhooks = Blueprint('pyfulcrum.web.webhooks', __name__)
 def webhook_in(name):
     """
     view for handling incoming Fulcrum webhook.
-
-    This view will 
     """
     if not request.data:
-        return Response('empty payload')
+        abort(Response('empty payload', status=200))
     payload = request.json
     if not payload:
-        abort(400)
-    ptype = payload['type']
+        abort(Response('empty json payload', status=200))
+    ptype = payload.get('type') or 'invalid.type'
     if not (ptype.startswith('form.') or ptype.startswith('record.')):
+        # we don't consider this as an error, because fulcrum will repeat it otherwise
         return Response('cannot handle {} event type'.format(ptype))
-    res_name, res_action = ptype.split('.')
-    res_id = payload['data']['id']
+    
+    try:
+        res_name, res_action = ptype.split('.')
+    except IndexError:
+        return Response('cannot handle {} event type'.format(ptype))
+
+    res_id = (payload.get('data') or {}).get('id')
+    if not res_id:
+        return Response('cannot handle {} event type with empty object id'.format(ptype))
+        
 
     # this can be called outside web process, with task queue
-    fulcrum_call(name, res_name, res_action, res_id)
+    out = fulcrum_call(name, res_name, res_action, res_id)
     return Response('ok')
 
 def fulcrum_call(config_name, res_name, res_action, res_id):
     # any intermediate actions here
     try:
         return _handle_webhook(config_name, res_name, res_action, res_id)
+    except HTTPException:
+        raise
     except Exception as err:
         log.warning("Cannot process event %s.%s for id %s in %s webhook: %s", res_name, res_action, res_id, config_name, err, exc_info=err)
 
@@ -53,11 +63,11 @@ def _handle_webhook(config_name, res_name, res_action, res_id):
     # * db  url
     # * client  api key
     # * storage  path
-    whinst = current_app.config.get_namespace('WEBHOOK_{}_'.format(config_name.upper()))
-    if not whinst:
+    config = current_app.config.get_namespace('WEBHOOK_{}_'.format(config_name.upper()))
+    if not config:
         abort(Response('webhook {} configuration not found'.format(config_name), status=404))
-
-    api_manager = ApiManager(**whinst)
+        
+    api_manager = ApiManager(**config)
     with api_manager:
         if res_name != 'audio':
             res_name = '{}s'.format(res_name)
