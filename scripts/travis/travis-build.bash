@@ -42,15 +42,10 @@ pip install 'pygdal<2.2.3' # $(gdal-config --version)
 pip install -r requirements.txt
 pip install -e .
 # sudo pg_ctlcluster 9.2 main stop
-sudo pg_ctlcluster 9.3 main start
+# sudo pg_ctlcluster 9.3 main start
 
-
-# sudo aptitude install postgis
-# postgresql-9.6-postgis-2.3
-sudo service postgresql start
-
-#sudo -u postgres psql -c "create role pyfulcrum superuser login password 'pyfulcrum';"
-#sudo -u postgres psql -c "create database pyfulcrum_test owner pyfulcrum;"
-#sudo -u postgres psql -d pyfulcrum_test -c 'create extension postgis;'
+sudo -u postgres psql -c "create role pyfulcrum superuser login password 'pyfulcrum';"
+sudo -u postgres psql -c "create database pyfulcrum_test owner pyfulcrum;"
+sudo -u postgres psql -d pyfulcrum_test -c 'create extension postgis;'
 
 echo "travis-build.bash is done."f
