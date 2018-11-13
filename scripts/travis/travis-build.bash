@@ -16,8 +16,7 @@ sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ multiverse'
 sudo apt-get -qq --fix-missing update
 sudo aptitude remove postgresql postgis
-sudo aptitude install -y libgdal20 python3-dev python3-pip python3-wheel postgresql-9.6-postgis-2.3-scripts
-sudo apt-get install libgdal-dev
+sudo aptitude install -y libgdal20 libgdal-dev python3-dev python3-pip python3-wheel postgresql-9.6-postgis-2.3-scripts
 
 #sudo apt-cache madison postgresql-9.5-postgis-2.3
 #sudo apt-cache madison postgresql-9.5-postgis-2.4
