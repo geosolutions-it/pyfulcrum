@@ -15,7 +15,9 @@ sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ multiverse'
 sudo apt-get -qq --fix-missing update
-sudo aptitude remove postgresql postgis
+aptitude search -V postgis
+exit 1
+
 sudo aptitude install -y libgdal20 libgdal-dev python3-dev python3-pip python3-wheel postgresql-9.6-postgis-2.3-scripts
 
 #sudo apt-cache madison postgresql-9.5-postgis-2.3
@@ -36,7 +38,6 @@ pip install --upgrade pip
 pip install 'pygdal<2.2.3' # $(gdal-config --version)
 pip install -r requirements.txt
 pip install -e .
-pg_lsclusters
 sudo pg_ctlcluster 9.2 main stop
 sudo pg_ctlcluster 9.6 main start
 
