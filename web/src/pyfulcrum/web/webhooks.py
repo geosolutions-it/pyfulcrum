@@ -35,10 +35,9 @@ def webhook_in(name):
     if not res_id:
         return Response('cannot handle {} event type with empty object id'.format(ptype))
         
-
     # this can be called outside web process, with task queue
     out = fulcrum_call(name, res_name, res_action, res_id)
-    return Response('ok')
+    return Response(out or 'ok')
 
 def fulcrum_call(config_name, res_name, res_action, res_id):
     # any intermediate actions here
@@ -48,6 +47,25 @@ def fulcrum_call(config_name, res_name, res_action, res_id):
         raise
     except Exception as err:
         log.warning("Cannot process event %s.%s for id %s in %s webhook: %s", res_name, res_action, res_id, config_name, err, exc_info=err)
+        return str(err)
+
+def _parse_objects_list(value):
+    """
+    returns mapping of resource -> list of ids
+    from a string like 'records:id1,id2;forms:id1,id2'
+    """
+    if not value:
+        return {}
+    out = {}
+    for line in value.split(';'):
+        try:
+            rname, ids = line.split(':', 1)
+        except ValueError:
+            continue
+        out[rname] = ids.split(',')
+    return out
+
+
 
 def _handle_webhook(config_name, res_name, res_action, res_id):
     """
@@ -66,9 +84,25 @@ def _handle_webhook(config_name, res_name, res_action, res_id):
     config = current_app.config.get_namespace('WEBHOOK_{}_'.format(config_name.upper()))
     if not config:
         abort(Response('webhook {} configuration not found'.format(config_name), status=404))
-        
+    
+    include_objects = _parse_objects_list(config.pop('include_objects', None))
+    exclude_objects = _parse_objects_list(config.pop('exclude_objects', None))
+    if include_objects and exclude_objects:
+        raise ValueError("Cannot use whitelist and blacklist at the same time")
+
     api_manager = ApiManager(**config)
     with api_manager:
+        include_obj = include_objects.get(res_name) or []
+        exclude_obj = exclude_objects.get(res_name) or []
+        
+        if include_obj and res_id not in include_obj:
+            log.warning("Object %s not in include list %s for %s", res_id, include_obj, res_name)
+            return 'whitelisted'
+
+        elif exclude_obj and res_id in exclude_obj:
+            log.warning("Object %s in exclude list %s for %s", res_id, exclude_obj, res_name)
+            return 'blacklisted'
+            
         if res_name != 'audio':
             res_name = '{}s'.format(res_name)
 
