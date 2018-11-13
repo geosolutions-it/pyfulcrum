@@ -5,4 +5,6 @@
 # sudo service jetty restart
 set -x
 set -e
-TEST_DB_URI=postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum_test pytest  --cov=pyfulcrum.lib --cov=pyfulcrum.web $@
+
+export TEST_DB_URI=postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum_test
+pytest --cov=pyfulcrum.lib --cov=pyfulcrum.web $@
