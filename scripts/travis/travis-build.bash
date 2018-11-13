@@ -33,7 +33,7 @@ sudo aptitude install -y libgdal20 libgdal-dev python3-dev python3-pip python3-w
 cd lib
 
 pip install --upgrade pip
-pip install pygdal<2.3 # $(gdal-config --version)
+pip install 'pygdal<2.3' # $(gdal-config --version)
 pip install -r requirements.txt
 pip install -e .
 
