@@ -36,13 +36,13 @@ def webhook_in(name):
         return Response('cannot handle {} event type with empty object id'.format(ptype))
         
     # this can be called outside web process, with task queue
-    out = fulcrum_call(name, res_name, res_action, res_id)
+    out = fulcrum_call(name, res_name, res_action, res_id, payload)
     return Response(out or 'ok')
 
-def fulcrum_call(config_name, res_name, res_action, res_id):
+def fulcrum_call(config_name, res_name, res_action, res_id, payload):
     # any intermediate actions here
     try:
-        return _handle_webhook(config_name, res_name, res_action, res_id)
+        return _handle_webhook(config_name, res_name, res_action, res_id, payload)
     except HTTPException:
         raise
     except Exception as err:
@@ -67,7 +67,7 @@ def _parse_objects_list(value):
 
 
 
-def _handle_webhook(config_name, res_name, res_action, res_id):
+def _handle_webhook(config_name, res_name, res_action, res_id, payload):
     """
     Actual webhook processing
 
@@ -87,21 +87,32 @@ def _handle_webhook(config_name, res_name, res_action, res_id):
     
     include_objects = _parse_objects_list(config.pop('include_objects', None))
     exclude_objects = _parse_objects_list(config.pop('exclude_objects', None))
-    if include_objects and exclude_objects:
-        raise ValueError("Cannot use whitelist and blacklist at the same time")
+    pdata = payload.get('data') or {}
+
+    check_objects = [(res_name, res_id,)]
+    if pdata.get('form_id'):
+        check_objects.append(('form', pdata['form_id'],))
+    if pdata.get('record_id'):
+        check_objects.append(('record', pdata['record_id'],))
+
+    # test parent objects as well, so if we exclude form,
+    # we should also exclude all records/media for that form
+    for check_type, check_id in check_objects:
+
+        include_obj = include_objects.get(check_type) or []
+        exclude_obj = exclude_objects.get(check_type) or []
+
+        if include_obj and check_id not in include_obj:
+            log.warning("Object %s not in include list %s for %s", check_id, include_obj, check_type)
+            return 'whitelisted'
+
+        elif exclude_obj and check_id in exclude_obj:
+            log.warning("Object %s in exclude list %s for %s", check_id, exclude_obj, check_type)
+            return 'blacklisted'
 
     api_manager = ApiManager(**config)
     with api_manager:
-        include_obj = include_objects.get(res_name) or []
-        exclude_obj = exclude_objects.get(res_name) or []
-        
-        if include_obj and res_id not in include_obj:
-            log.warning("Object %s not in include list %s for %s", res_id, include_obj, res_name)
-            return 'whitelisted'
 
-        elif exclude_obj and res_id in exclude_obj:
-            log.warning("Object %s in exclude list %s for %s", res_id, exclude_obj, res_name)
-            return 'blacklisted'
             
         if res_name != 'audio':
             res_name = '{}s'.format(res_name)

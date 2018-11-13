@@ -68,20 +68,6 @@ class WebhookTestCase(WebTestCase):
             output_val = _parse_objects_list(input_val)
             self.assertEqual(expected_val, output_val)
 
-    def test_webhook_objects_list_bad_conf(self):
-        cfg = {'WEBHOOK_TEST_INCLUDE_OBJECTS': 'test:123',
-               'WEBHOOK_TEST_EXCLUDE_OBJECTS': 'test:321'}
-        cfg.update(self._config)
-
-        self._app.config.from_mapping(cfg)
-
-        resp = self._test_client.post('/webhook/test/',
-                                      data='{"type": "form.create", "data": {"id": "7a0c3378-b63a-4707-b459-df499698f23c"}}',
-                                      content_type='application/json')
-        self.assertEqual(resp.status_code, 200, resp.data)
-        self.assertEqual(resp.data, b'Cannot use whitelist and blacklist at the same time', resp.data)
-    
-    
     def test_webhook_objects_list_whitelist(self):
         cfg = {'WEBHOOK_TEST_INCLUDE_OBJECTS': 'form:123'}
         cfg.update(self._config)
@@ -106,6 +92,12 @@ class WebhookTestCase(WebTestCase):
                                       content_type='application/json')
         self.assertEqual(resp.status_code, 200, resp.data)
         self.assertEqual(resp.data, b'blacklisted', resp.data)
+        
+        resp = self._test_client.post('/webhook/test/',
+                                      data='{"type": "record.create", "data": {"id": "4e1c33ad-5496-4818-826f-504e66239b4d", "form_id":"7a0c3378-b63a-4707-b459-df499698f23c"}}',
+                                      content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.data)
+        self.assertEqual(resp.data, b'blacklisted', resp.data)
 
 
     def test_webhook_objects_list_whitelist_ok(self):
@@ -119,4 +111,3 @@ class WebhookTestCase(WebTestCase):
                                       content_type='application/json')
         self.assertEqual(resp.status_code, 200, resp.data)
         self.assertEqual(resp.data, b'ok', resp.data)
-

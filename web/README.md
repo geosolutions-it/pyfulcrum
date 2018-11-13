@@ -75,6 +75,18 @@ WEBHOOK_$NAME_STORAGE="/path/to/storage;http://server/storage/"
 * `WEBHOOK_$NAME_STORAGE` is a string containing path to storage and optional base url which is used to serve storage files via HTTP server. Both values are separated with `;` sign. 
 
 Internally, webhook receives `$NAME` as call parameter, then it retrives per-webhook configuration using [pseudo-namespace](http://flask.pocoo.org/docs/1.0/api/#flask.Config.get_namespace) constructed with `WEBHOOK_$NAME_` string. If there's no configuration for given namespace, webhook call will be considered invalid. If configuration exists, it will be processed.
+##### Including/excluding objects handled by webhook
+
+Webhook configuration allows to provide list of objects (for example, forms) that should be only/should not be processed by webhook. This is configurable with two config variables, `WEBHOOK_$NAME_INCLUDE_OBJECTS` and `WEBHOOK_$NAME_EXCLUDE_OBJECTS`. Each value in variable should have a a form `resource_type:id1,id2,..;resource_type:id1,id2`. For example, to handle updates on two specific forms only, you should set variable to
+
+```
+WEBHOOK_$NAME_INCLUDE_OBJECTS="form:$form1_id,$form2_id"
+```
+
+where `$form1_id` and `$form2_id` are identifiers of those forms.
+
+
+
 
 #### API configuration
 
