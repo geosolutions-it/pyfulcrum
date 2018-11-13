@@ -37,8 +37,8 @@ pip install 'pygdal<2.2.3' # $(gdal-config --version)
 pip install -r requirements.txt
 pip install -e .
 pg_lsclusters
-pg_ctlcluster 9.2 main stop
-pg_ctlcluster 9.6 main start
+sudo pg_ctlcluster 9.2 main stop
+sudo pg_ctlcluster 9.6 main start
 
 
 # sudo aptitude install postgis
