@@ -17,9 +17,9 @@ sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 
 sudo apt-get -qq --fix-missing update
 
-sudo aptitude remove -y postgresql-9.2 postgresql-9.3 postgresql-9.4 postgresql-9.5 postgresql-9.2-postgis-2.3-scripts postgresql-9.3-postgis-2.3-scripts postgresql-9.4-postgis-2.3-scripts postgresql-9.5-postgis-2.3-scripts postgresql-9.6-postgis-2.3 postgresql-9.6 
+sudo aptitude remove -y postgresql-9.2 postgresql-9.3 postgresql-9.4 postgresql-9.5 postgresql-9.2-postgis-2.3-scripts postgresql-9.3-postgis-2.3-scripts postgresql-9.4-postgis-2.3-scripts postgresql-9.5-postgis-2.3-scripts postgresql-9.6-postgis-2.3-scripts postgresql-9.6 
 
-sudo aptitude install -y libgdal20 libgdal-dev python3-dev python3-pip python3-wheel postgresql-9.3-postgis-2.3-scripts
+sudo aptitude install -y libgdal20 libgdal-dev python3-dev python3-pip python3-wheel postgresql-9.3-postgis-2.3
 
 sudo aptitude update
 sudo aptitude search postgis
