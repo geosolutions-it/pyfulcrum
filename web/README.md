@@ -83,10 +83,11 @@ Webhook configuration allows to provide list of objects (for example, forms) tha
 WEBHOOK_$NAME_INCLUDE_OBJECTS="form:$form1_id,$form2_id"
 ```
 
-where `$form1_id` and `$form2_id` are identifiers of those forms.
+where `$form1_id` and `$form2_id` are identifiers of those forms. This will also work for related resources, like record or media files. They will be processed, only if form they're referencing is one of those forms.
 
+To ignore specific forms, you should add similar configuration to `WEBHOOK_$NAME_EXCLUDE_OBJECTS`.
 
-
+If both variables are provided in configuration, resource will be checked for include list first (so whitelist check will be performed first). If whitelist is empty, blacklist mode is performed.
 
 #### API configuration
 
