@@ -11,6 +11,7 @@ from pyfulcrum.lib.api import ApiManager
 log = logging.getLogger(__name__)
 webhooks = Blueprint('pyfulcrum.web.webhooks', __name__)
 
+
 @webhooks.route('/webhook/<name>/', methods=['POST'])
 def webhook_in(name):
     """
@@ -23,9 +24,10 @@ def webhook_in(name):
         abort(Response('empty json payload', status=200))
     ptype = payload.get('type') or 'invalid.type'
     if not (ptype.startswith('form.') or ptype.startswith('record.')):
-        # we don't consider this as an error, because fulcrum will repeat it otherwise
+        # we don't consider this as an error,
+        # because fulcrum will repeat it otherwise
         return Response('cannot handle {} event type'.format(ptype))
-    
+
     try:
         res_name, res_action = ptype.split('.')
     except IndexError:
@@ -33,21 +35,30 @@ def webhook_in(name):
 
     res_id = (payload.get('data') or {}).get('id')
     if not res_id:
-        return Response('cannot handle {} event type with empty object id'.format(ptype))
-        
+        return Response('cannot handle {} event type with empty object id'
+                        .format(ptype))
+
     # this can be called outside web process, with task queue
     out = fulcrum_call(name, res_name, res_action, res_id, payload)
     return Response(out or 'ok')
 
+
 def fulcrum_call(config_name, res_name, res_action, res_id, payload):
     # any intermediate actions here
     try:
-        return _handle_webhook(config_name, res_name, res_action, res_id, payload)
+        return _handle_webhook(config_name,
+                               res_name,
+                               res_action,
+                               res_id,
+                               payload)
     except HTTPException:
         raise
     except Exception as err:
-        log.warning("Cannot process event %s.%s for id %s in %s webhook: %s", res_name, res_action, res_id, config_name, err, exc_info=err)
+        log.warning("Cannot process event %s.%s for id %s in %s webhook: %s",
+                    res_name, res_action, res_id, config_name, err,
+                    exc_info=err)
         return str(err)
+
 
 def _parse_objects_list(value):
     """
@@ -66,7 +77,6 @@ def _parse_objects_list(value):
     return out
 
 
-
 def _handle_webhook(config_name, res_name, res_action, res_id, payload):
     """
     Actual webhook processing
@@ -75,16 +85,17 @@ def _handle_webhook(config_name, res_name, res_action, res_id, payload):
     Configuration
 
     """
-    
     # dictionary with webhook ids
     # webhook configuration
     # * db  url
     # * client  api key
     # * storage  path
-    config = current_app.config.get_namespace('WEBHOOK_{}_'.format(config_name.upper()))
+    config = current_app.config.get_namespace('WEBHOOK_{}_'
+                                              .format(config_name.upper()))
     if not config:
-        abort(Response('webhook {} configuration not found'.format(config_name), status=404))
-    
+        abort(Response('webhook {} configuration not found'
+                       .format(config_name), status=404))
+
     include_objects = _parse_objects_list(config.pop('include_objects', None))
     exclude_objects = _parse_objects_list(config.pop('exclude_objects', None))
     pdata = payload.get('data') or {}
@@ -103,17 +114,18 @@ def _handle_webhook(config_name, res_name, res_action, res_id, payload):
         exclude_obj = exclude_objects.get(check_type) or []
 
         if include_obj and check_id not in include_obj:
-            log.warning("Object %s not in include list %s for %s", check_id, include_obj, check_type)
+            log.warning("Object %s not in include list %s for %s",
+                        check_id, include_obj, check_type)
             return 'whitelisted'
 
         elif exclude_obj and check_id in exclude_obj:
-            log.warning("Object %s in exclude list %s for %s", check_id, exclude_obj, check_type)
+            log.warning("Object %s in exclude list %s for %s",
+                        check_id, exclude_obj, check_type)
             return 'blacklisted'
 
     api_manager = ApiManager(**config)
     with api_manager:
 
-            
         if res_name != 'audio':
             res_name = '{}s'.format(res_name)
 
