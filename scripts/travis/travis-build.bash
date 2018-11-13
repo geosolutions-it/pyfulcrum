@@ -10,14 +10,11 @@ sudo add-apt-repository --remove 'http://us-central1.gce.archive.ubuntu.com/ubun
 sudo add-apt-repository --remove 'http://us-central1.gce.archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository --remove 'http://us-central1.gce.archive.ubuntu.com/ubuntu/ multiverse'
 sudo rm /etc/apt/sources.list.d/pgdg.list
-# sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
-
-sudo deb http://ppa.launchpad.net/ubuntugis/ubuntugis-unstable/ubuntu xenial main 
-sudo deb-src http://ppa.launchpad.net/ubuntugis/ubuntugis-unstable/ubuntu xenial main
-
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ universe'
 sudo add-apt-repository 'http://archive.ubuntu.com/ubuntu/ multiverse'
+sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+
 sudo apt-get -qq --fix-missing update
 
 sudo aptitude remove -y postgresql-9.2 postgresql-9.3 postgresql-9.4 postgresql-9.5 postgresql-9.2-postgis-2.3-scripts postgresql-9.3-postgis-2.3-scripts postgresql-9.4-postgis-2.3-scripts postgresql-9.5-postgis-2.3-scripts
