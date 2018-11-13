@@ -19,6 +19,9 @@ sudo aptitude remove -y postgresql-9.2 postgresql-9.3 postgresql-9.4 postgresql-
 
 sudo aptitude install -y libgdal20 libgdal-dev python3-dev python3-pip python3-wheel postgresql-9.6-postgis-2.3-scripts
 
+aptitude update
+aptitude search postgis
+exit 1
 #sudo apt-cache madison postgresql-9.5-postgis-2.3
 #sudo apt-cache madison postgresql-9.5-postgis-2.4
 #sudo apt-cache madison postgis
@@ -38,8 +41,6 @@ pip install 'pygdal<2.2.3' # $(gdal-config --version)
 pip install -r requirements.txt
 pip install -e .
 # sudo pg_ctlcluster 9.2 main stop
-aptitude update
-aptitude search postgis
 sudo pg_ctlcluster 9.6 main start
 
 
