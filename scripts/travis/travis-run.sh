@@ -6,5 +6,5 @@
 set -x
 set -e
 
-export TEST_DB_URI=postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum_test
+export TEST_DB_URL=postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum_test
 pytest --cov=pyfulcrum.lib --cov=pyfulcrum.web $@
