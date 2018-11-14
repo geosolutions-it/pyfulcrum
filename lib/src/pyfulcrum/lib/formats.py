@@ -136,7 +136,10 @@ def json_item(obj, storage):
 def geojson_item(obj, storage):
     if getattr(obj, 'point', None) is None:
         return
-    geom = ogr.CreateGeometryFromWkb(obj.point.data.tobytes())
+    if isinstance(obj.point, str):
+        geom = ogr.CreateGeometryFromWkt(obj.point)
+    else:
+        geom = ogr.CreateGeometryFromWkb(obj.point.data.tobytes())
     x,y = geom.GetX(), geom.GetY()
     geom.SetPoint(0, y, x)
 

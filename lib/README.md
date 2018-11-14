@@ -149,24 +149,26 @@ Each resource class exposes common interface. See `pyfulcrum.lib.models` source 
 
 ## PyFulcrum CLI
 
-PyFulcrum provides simple cli interface to fetch and access data. Access can be in various formats:
-
- * str - plain string dump of basic object data, works with all resource types
- * csv - dumps payload keys as columns and values as rows, works with all resource types
- * raw - dumps raw payload for objects, works with all resource types
- * json - dumps basic data about objects, works with all resources
- * geojson - dumps payload data as properties, works with records only, will return records with points attached
- * shapefile - dumps payload data as properties, works with records only, will return records with points attached
- * kml - dumps payload data as properties, works with records only, will return records with points attached
-
-CLI interface is available through `pyfulcrum` command (usually resides in `venv/bin/` directory). Invocation requires few mandatory params provided:
+PyFulcrum provides simple cli interface to fetch and access data. CLI interface is available through `pyfulcrum` command (usually resides in `venv/bin/` directory). Invocation requires few mandatory params provided:
 
  * Fulcrum API key
  * database URL
  * root path to storage
  * (optional) url root for storage webserver
- * (optional) output format
+ * (optional) output format (default is `json`)
  * (optional) output file to which results shoudl be written
+
+Supported output formats:
+
+ * `str` - plain string dump of basic object data, works with all resource types
+ * `csv` - dumps payload keys as columns and values as rows, works with all resource types
+ * `raw` - dumps raw payload for objects, works with all resource types
+ * `json` - dumps basic data about objects, works with all resources. This is default format.
+ * `geojson` - dumps payload data as properties, works with records only, will return records with points attached
+ * `shapefile` - dumps payload data as properties, works with records only, will return records with points attached
+ * `kml` - dumps payload data as properties, works with records only, will return records with points attached
+
+**Note**: Spatial formats (`geojson`, `shapefile`, `kml`) will work with records only.
 
 Usage syntax and common parameters used by `pyfulcrum`:
 
@@ -206,6 +208,15 @@ You should adjust values and paths in your environment file and `runfulcrum.sh` 
 
 `pyfulcrum` command offers several commands that allow to list multiple, retrieve and remove one specific resource. 
 
+Resources available are:
+
+* `projects`
+* `forms`
+* `records`
+* `photos`
+* `audio`
+* `videos`
+* `signatures`
 
 #### List:
 
