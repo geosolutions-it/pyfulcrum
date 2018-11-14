@@ -151,7 +151,7 @@ class BaseResource(Base):
         payload = cls._pre_payload(payload, s, client, storage)
 
         id = payload['id']
-        existing = cls.get(id, session=s)
+        existing = cls.get(id, session=s, if_deleted=True)
         if not existing:
             existing = cls(id=id)
         for m in cls.MAPPED_COLUMNS:
