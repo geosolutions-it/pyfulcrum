@@ -269,6 +269,9 @@ Below is a list of resources and accepted url params:
  | | `updated_before` | Returns records updated before specific timestamp 
  | | `updated_since` | Returns records updated after specific timestamp 
 
+
+For timestamps, suggested timestamp format is `YYYYMMDDTHH:MM:SS+TZTZ`, for example: `2018-11-09T12:05:06+0100`.
+
 #### Get:
 
 ```

@@ -7,6 +7,7 @@ import json
 import tempfile
 import zipfile
 import csv
+from datetime import datetime
 from itertools import chain
 from functools import wraps
 from shapely import wkb
@@ -14,7 +15,7 @@ from osgeo import ogr, osr
 from io import StringIO
 ogr.UseExceptions()
 
-print_attrs = ('id', 'status', 'name', 'media_type', 'content_type', 'form_id', 'record_id', 'records_count', 'values_processed')
+print_attrs = ('id', 'status', 'name', 'media_type', 'content_type', 'form_id', 'record_id', 'records_count', 'values_processed', 'created_at', 'updated_at',)
 
 
 def formatter(allowed_classes=None):
@@ -125,6 +126,10 @@ def json_item(obj, storage):
 
     if getattr(obj, 'get_values', None):
         out['values'] = obj.get_values(storage)
+    for k, v in out.items():
+        if isinstance(v, datetime,):
+            v = v.strftime('%Y-%m-%dT%H:%M%S%z')
+            out[k] = v
     return out
 
 
@@ -206,6 +211,7 @@ def format_csv(items, storage, multiple=False):
     except TypeError:
         item_row = items[0]
 
+    record_fields = {}
     for fname in item_row.payload.keys():
         # id was already added
         if fname == 'id': 
@@ -213,7 +219,9 @@ def format_csv(items, storage, multiple=False):
 
         # form values is a dictionary, we need to extract each field
         if fname == 'form_values':
-            for fname, value in item_row.payload['form_values'].items():
+            for fdef in item_row.form.fields_list:
+                fname = fdef.label
+                record_fields[fname] = fdef.id
                 header.append('field.{}'.format(fname))
         else:
             header.append(fname)
@@ -226,7 +234,8 @@ def format_csv(items, storage, multiple=False):
         for k in header[1:]:
             if k.startswith('field.'):
                 fname = k[6:]
-                row.append(payload['form_values'].get(fname))
+                fid = record_fields[fname]
+                row.append(payload['form_values'].get(fid))
             else:
                 row.append(payload[k])
         w.writerow(row)

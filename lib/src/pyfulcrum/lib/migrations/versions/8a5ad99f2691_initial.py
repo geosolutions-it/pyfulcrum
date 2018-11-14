@@ -98,7 +98,7 @@ def upgrade():
     sa.Column('file_size', sa.Integer(), nullable=False),
     sa.Column('content_type', sa.String(), nullable=False),
     sa.Column('track', geoalchemy2.types.Geometry(geometry_type='LINESTRING'), nullable=True),
-    sa.Column('media_type', sa.Enum('photo', 'audio', 'video', name='media_types'), nullable=False),
+    sa.Column('media_type', sa.Enum('photo', 'audio', 'video', 'signature', name='media_types'), nullable=False),
     sa.ForeignKeyConstraint(['form_id'], ['fulcrum_form.id'], ),
     sa.ForeignKeyConstraint(['record_id'], ['fulcrum_record.id'], ),
     sa.PrimaryKeyConstraint('id')
