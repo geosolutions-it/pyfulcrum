@@ -76,7 +76,10 @@ class _BaseCommand(Command):
         output_f = self.app.options.output[0] if self.app.options.output else None
         if output_f:
             with open(output_f, 'wb+') as f:
-                f.write(output)
+                try:
+                    f.write(output)
+                except TypeError:
+                    f.write(output.encode('utf-8'))
         else:
             print(output)
 

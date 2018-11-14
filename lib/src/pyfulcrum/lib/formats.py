@@ -132,10 +132,23 @@ def geojson_item(obj, storage):
     if getattr(obj, 'point', None) is None:
         return
     geom = ogr.CreateGeometryFromWkb(obj.point.data.tobytes())
+    x,y = geom.GetX(), geom.GetY()
+    geom.SetPoint(0, y, x)
+
+    props = {'id': obj.id}
+    props.update(obj.payload)
+    props.pop('form_values')
+    try:
+        props.update(obj.get_values(storage))
+        # list of fields that holds form values
+        props['fields_keys'] = list(obj.get_values(storage).keys())
+    except AttributeError:
+        pass
+
     out = {'type': 'Feature',
            'id': obj.id,
            'geometry': json.loads(geom.ExportToJson()),
-           'properties': obj.get_values(storage) if hasattr(obj, 'get_values') else obj.payload}
+           'properties': props}
     out['properties']['id'] = obj.id
     return out
 
@@ -248,24 +261,25 @@ def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use
     item_class = item_row.__class__.__name__
 
     # need to extract field names from first item in list
-    item_defs = [('id', ogr.FieldDefn('id', ogr.OFTString), 0,)]
+    item_defs = [('id', ogr.FieldDefn('id', ogr.OFTString), 0, None,)]
    
-    item_idx = 0
+    item_idx = 1
     for fname in item_row.payload.keys():
         # id was already added
-        if fname == 'id': 
+        if fname in ('id', 'form_values',): 
             continue
-        # form values is a dictionary, we need to extract each field
-        if fname == 'form_values':
-            for fname, value in item_row.payload['form_values'].items():
-                item_defs.append(('field.{}'.format(fname), ogr.FieldDefn('f_{}'.format(fname), ogr.OFTString), item_idx,))
-                item_idx += 1
-        else:
-            # warning: SHP has silly limitation on field name, it will
-            # truncate longer names. Better to use GeoJSON instead
-            item_defs.append((fname, ogr.FieldDefn(fname, ogr.OFTString), item_idx,))
+        
+        # warning: SHP has silly limitation on field name, it will
+        # truncate longer names. Better to use GeoJSON instead
+        item_defs.append((fname, ogr.FieldDefn(fname, ogr.OFTString), item_idx, None))
         item_idx += 1
         
+    for field in item_row.form.fields_list:
+        label = field.label
+        field_id = field.id
+        item_defs.append(('field.{}'.format(label), ogr.FieldDefn('f_{}'.format(label), ogr.OFTString), item_idx, field_id))
+        item_idx += 1
+
     basename = '{}s'.format(item_class.lower())
     outfile = '{}.{}'.format(basename, extension)
     zfile = '{}.zip'.format(outfile)
@@ -279,7 +293,7 @@ def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use
         layer = data.CreateLayer(basename, srs, ogr.wkbPoint)
 
         # create layer definitions from fields from above
-        for fname, fdef, fidx in item_defs:
+        for fname, fdef, fidx, field_id in item_defs:
             layer.CreateField(fdef)
         ldef = layer.GetLayerDefn()
         for item in chain([item_row], items):
@@ -289,17 +303,24 @@ def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use
                 continue
 
             feat = ogr.Feature(layer.GetLayerDefn())
+            values = dict( (v.field_id, v) for v in item.values_list)
             # populate properties
-            for fname, fdef, fidx in item_defs:
+            for fname, fdef, fidx, field_id in item_defs:
                 if fname == 'id':
                     value = item.id
+                
                 # form value, need to serialize to json
                 # warning - SHP has silly 256 char limitation for VALUE
                 # that means some fields may be truncated
-                elif fname.startswith('field.'):
-                    value = json.dumps(item.payload['form_values'].get(fname[len('field.'):]))
+                elif field_id:
+                    field_data = values.get(field_id)
+                    if field_data:
+                        value = json.dumps(field_data.value)
+                    else:
+                        value = json.dumps(None)
                 else:
                     value = item.payload[fname]
+                
                 # definition expects string here
                 if isinstance(value, (list, dict,)):
                     value = json.dumps(value)
@@ -310,6 +331,9 @@ def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use
             else:
                 point = item.point.data.tobytes()
                 geom = ogr.CreateGeometryFromWkb(point)
+            # swap xy
+            x, y = geom.GetX(), geom.GetY()
+            geom.SetPoint(0, y, x)
             feat.SetGeometry(geom)
             layer.CreateFeature(feat)
         data.Destroy()
