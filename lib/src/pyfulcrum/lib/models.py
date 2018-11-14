@@ -71,7 +71,7 @@ class BaseResource(Base):
         return []
 
     @classmethod
-    def get(cls, id, session, if_deleted=False):
+    def get(cls, id, session, if_removed=False):
         """
         Return BaseResource instance with given id or None.
 
@@ -80,7 +80,7 @@ class BaseResource(Base):
 
         """
         s = session
-        if if_deleted:
+        if if_removed:
             return s.query(cls).filter(cls.id == id).first()
         return s.query(cls).filter(cls.removed==False, cls.id == id).first()
 
@@ -151,7 +151,7 @@ class BaseResource(Base):
         payload = cls._pre_payload(payload, s, client, storage)
 
         id = payload['id']
-        existing = cls.get(id, session=s, if_deleted=True)
+        existing = cls.get(id, session=s, if_removed=True)
         if not existing:
             existing = cls(id=id)
         for m in cls.MAPPED_COLUMNS:
@@ -162,17 +162,36 @@ class BaseResource(Base):
             setattr(existing, mdest, payload[msrc])
         # hook for subclasses
         # also, should clean payload
+
+        if reset_removed:
+            for pname in cls.PARENT_ATTRS:
+                phandler = getattr(existing, pname, None)
+                if phandler and phandler.removed:
+                    raise ValueError("Cannot restore {}: parent {} is removed".format(existing, phandler))
+            existing.removed = False
+            for cname in cls.CHILDREN_ATTRS:
+                chandler = getattr(existing, cname, None)
+                if chandler:
+                    for c in chandler:
+                        c.removed = False
+                        session.add(c)
+
         cls._post_payload(existing, payload, s, client, storage)
 
         existing.payload = payload
-        if reset_removed:
-            existing.removed = False
         s.add(existing)
         s.flush()
         return existing
     
+    CHILDREN_ATTRS = ('records', 'fields_list', 'values_list',)
+    PARENT_ATTRS = ('form', 'record',)
     def remove(self, session):
         self.removed = True
+        for cname in self.CHILDREN_ATTRS:
+            chandler = getattr(self, cname, None)
+            if chandler is not None:
+               for c in chandler:
+                    c.remove(session)
         session.add(self)
         session.flush()
         return self
@@ -207,6 +226,8 @@ class Form(BaseResource):
         """
         Returns number of records for this form.
         """
+        if self.removed:
+            return len([r for r in self.records])
         return len([r for r in self.records if not r.removed])
 
     @classmethod

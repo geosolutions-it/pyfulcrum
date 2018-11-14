@@ -85,7 +85,7 @@ def list_resources(resource_name):
             return jsonify(out)
 
         elif format == 'raw':
-            out = {'items': [r.payload for r in paged],
+            out = {resource_name: [r.payload for r in paged],
                    'total': count,
                    'per_page': per_page,
                    'total_pages': total_pages,

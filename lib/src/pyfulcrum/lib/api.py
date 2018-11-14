@@ -48,7 +48,7 @@ class BaseObjectManager(object):
             raise ValueError("invalid object path: {}".format(self.path))
         return h
 
-    def get(self, obj_id, cached=True, if_deleted=False):
+    def get(self, obj_id, cached=True, if_removed=False):
         """
         Retrieve 
         """
@@ -63,11 +63,12 @@ class BaseObjectManager(object):
                 data = data[p]
             data.update(self.default_item_args)
             return self.model.from_payload(data, self.session, self.client, self.storage)
-        return self.model.get(obj_id, session=self.session, if_deleted=if_deleted)
+        return self.model.get(obj_id, session=self.session, if_removed=if_removed)
 
     def remove(self, obj_id, cached=True, *args, **kwargs):
         obj = self.get(obj_id, cached=True)
-        return obj.remove(self.session)
+        if obj:
+            return obj.remove(self.session)
 
     def list(self, cached=True, generator=False, ignore_existing=False, flush=False, *args, **kwargs):
         """
