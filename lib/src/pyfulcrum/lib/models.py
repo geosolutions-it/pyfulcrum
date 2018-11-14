@@ -294,9 +294,27 @@ class Field(BaseResource):
         [{"photo_id":"a8d1df96-44e5-75e9-7312-7e2c5e902496,"caption": ""}]
 
         """
-        if self.type in ('SignatureField', 'AudioField', 'PhotoField', 'VideoField',):
+        if self.is_media:
             return '{}_id'.format(self.type.lower()[:-len('field')])
+    
+    @property
+    def media_type(self):
+        """
+        media type name (photos, videos..)
+        """
+        mk = self.media_key
+        if mk is None:
+            return
+        if mk == 'audio_id':
+            return 'audio'
+        return '{}s'.format(mk[:-3])
 
+    @property
+    def is_media(self):
+        """
+        Returns True if field contains media reference
+        """
+        return self.type in ('SignatureField', 'AudioField', 'PhotoField', 'VideoField',)
 
 class Record(BaseResource):
     __tablename__ = 'fulcrum_record'
@@ -424,6 +442,21 @@ class Value(BaseResource):
             if k == 'meta':
                 continue
             payload.pop(k)
+
+        # fetch media automatically
+        fdef = Field.get(instance.field_id, session=session)
+        mk = fdef.media_key
+        if mk and isinstance(instance.value, list):
+            media_type = fdef.media_type
+            mclient = getattr(client, media_type, None)
+            for media in instance.value:
+                media_id = media[mk]
+                if mclient:
+                    data = mclient.find(media_id)
+                    pdata = data[media_type.rstrip('s')].copy()
+                    pdata['media_type'] = media_type.rstrip('s')
+                    media = Media.from_payload(pdata, session, client, storage)
+
 
 
     def get_value(self, storage):
