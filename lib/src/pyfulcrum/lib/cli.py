@@ -91,7 +91,7 @@ class _BaseCommand(Command):
         parser.add_argument('resource',
                             type=self.is_allowed_resource,
                             nargs=1,
-                            help="Name of resource to list (projects, forms, records, values, media)")
+                            help="Name of resource to list (projects, forms, records, values, photos, videos, audio, signatures)")
         parser.add_argument('--cached',
                             dest='cached',
                             action='store_true',
