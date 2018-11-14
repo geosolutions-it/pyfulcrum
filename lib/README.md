@@ -338,6 +338,55 @@ Sample invocations:
 ./runfulcrum.sh remove records 29ac7df1-69e8-4227-bb1c-9040196d3d4c
 ```
 
+** Important note** Remove command will change only local state. It will not remove any data with Fulcrum API. If a resource is removed, all children resorces are also removed. For example, if you remove specific form, all records will be marked as removed as well, and won't be shown in list/get command.
+If operator or webhook will try to update resource which parent is marked as removed, error message will be returned instead.
+To perform restore of removed objects, most parent object (usually a form) must be restored with `list` or `get` command.
+
+
+##### Removal workflow:
+
+* check if forms and records are removed already. Output should be empty for those commands:
+
+```
+./runfulcrum.sh listremoved forms --format str
+./runfulcrum.sh listremoved records --format str
+```
+
+* remove form:
+
+```
+./runfulcrum.sh remove forms d701ed81-9de8-41ed-bc51-38d0a375a4c1 --format str
+```
+
+* check if form is removed. This should show the form
+
+```
+./runfulcrum.sh listremoved forms --format str
+```
+
+* check if records are removed too. This should print list of all records for the form
+
+```
+./runfulcrum.sh listremoved records --format str
+```
+
+* if you try to update one of those records, error will be displayed:
+
+```
+./runfulcrum.sh get records 3faa8067-ca0d-4ded-b502-949bde4fb64c
+Cannot restore Record(3faa8067-ca0d-4ded-b502-949bde4fb64c): parent Form(d701ed81-9de8-41ed-bc51-38d0a375a4c1) is removed
+```
+
+#### Restore workflow
+
+If situation as above, to restore form and records, you just need to restore parent form:
+
+```
+./runfulcrum.sh get forms d701ed81-9de8-41ed-bc51-38d0a375a4c1 --format str
+```
+
+Then you'll be able to update specific records as well.
+
 #### List removed
 
 ```
