@@ -145,7 +145,7 @@ Each endpoint can be served in varions formats. Format can be controlled by sett
 
 Summary of supported formats per resource type
 
- Resource type | URL | formats | Spatial-aware  | allowed filtering args 
+ Resource type | URL | formats | Spatial-aware | allowed filtering args 
  --- | --- | --- | --- 
  Forms | `/api/forms/` | `raw`, `json`, `csv` | No | `form_id` 
  Records | `/api/records/ | `raw`, `json`, `geojson`, `kml`, `shp` | Yes | `form_id`, `record_id`, `created_since`, `created_before`, `updated_since`, `updated_before` 
