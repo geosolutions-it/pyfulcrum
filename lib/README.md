@@ -1,8 +1,8 @@
-# PyFulcrum library
+# PyFulcrum-lib package
 
 ## Introduction
 
-PyFulcrum is a python library that fetches contents from Fulcrum API (https://www.fulcrumapp.com/) and saves it to local database/storage. It also exposes own API to update and retrive saved content. 
+PyFulcrum-lib is a python library that fetches contents from Fulcrum API (https://www.fulcrumapp.com/) and saves it to local database/storage. It also exposes own API to update and retrive saved content. 
 
 
 ## Requirements
@@ -147,8 +147,30 @@ Each resource class exposes common interface. See `pyfulcrum.lib.models` source 
 
 **Note:** that if any value in `Record` is media field and media it's refering is missing, field will return empty value. This is because data comming from Fulcrum API may not be entirely consistent (i.e. media resources may refer records that are not available in API for current user).
 
-## PyFulcrum CLI
+## Database Model
 
+PyFulcrum-lib stores data in custom db model, which reflects features from Fulcrum API, but not directly structure of it. PyFulcrum stores only part of Fulcrum's data: forms, records and media. It doesn't store any user information, changesets nor classification/choices list. In other words, it's a snapshot of content from Fulcrum API.
+
+Main models are:
+* `Form`
+* `Record`
+* `Media`
+
+There are helper models:
+
+* `Field`, which is used by `Form` and `Value` as a definition of single field.
+* `Value`, which is used by `Record` to reflect one specific value for one specific field.
+* `Project` which is used by `Form` and `Record` to split datasets by projects
+
+Full database model schema:
+
+![PyFulcrum database model](db_schema.png "Fulcrum db model")
+
+
+
+
+## PyFulcrum CLI
+0
 PyFulcrum provides simple cli interface to fetch and access data. CLI interface is available through `pyfulcrum` command (usually resides in `venv/bin/` directory). Invocation requires few mandatory params provided:
 
  * Fulcrum API key
@@ -162,11 +184,14 @@ Supported output formats:
 
  * `str` - plain string dump of basic object data, works with all resource types
  * `csv` - dumps payload keys as columns and values as rows, works with all resource types
- * `raw` - dumps raw payload for objects, works with all resource types
- * `json` - dumps basic data about objects, works with all resources. This is default format.
+ * `raw` - dumps raw Fulcrum payload for objects, works with all resource types
+ * `json` - dumps basic data about objects, works with all resources. This is default format. 
  * `geojson` - dumps payload data as properties, works with records only, will return records with points attached
  * `shapefile` - dumps payload data as properties, works with records only, will return records with points attached
  * `kml` - dumps payload data as properties, works with records only, will return records with points attached
+
+
+**Note**: Both `raw` and `json` formats are JSON, but the main difference is `raw` is an exact copy of payload received from Fulcrum API. `json` format contains data processed locally (for example richer values description, which contains field names/labels and urls to local storage).
 
 **Note**: Spatial formats (`geojson`, `shapefile`, `kml`) will work with records only.
 

@@ -51,7 +51,11 @@ def formatter(allowed_classes=None):
     def _formatter(f):
         @wraps(f)    
         def _wrap(items, storage, multiple=False):
-            if not items:
+            try:
+                not_items = items.count() == 0
+            except AttributeError:
+                not_items = not items
+            if not_items:
                 if multiple:
                     return []
                 return
@@ -208,6 +212,7 @@ def format_csv(items, storage, multiple=False):
     out = StringIO()
     w = csv.writer(out, quoting=csv.QUOTE_NONNUMERIC)
     header = ['id']
+
     try:
         item_row = next(items)
         items = chain([item_row], items)
