@@ -167,8 +167,6 @@ Full database model schema:
 ![PyFulcrum database model](db_schema.png "Fulcrum db model")
 
 
-
-
 ## PyFulcrum CLI
 0
 PyFulcrum provides simple cli interface to fetch and access data. CLI interface is available through `pyfulcrum` command (usually resides in `venv/bin/` directory). Invocation requires few mandatory params provided:
