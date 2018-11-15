@@ -102,7 +102,7 @@ def list_resources(resource_name):
 
         elif format == 'geojson':
             records_only(resource_name, 'geojson')
-            features = {'type': 'FeaturesCollection',
+            features = {'type': 'FeatureCollection',
                         'features': [geojson_item(r, api_manager.storage) for r in 
                                      paged],
                         'total': count,
