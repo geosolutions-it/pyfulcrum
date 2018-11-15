@@ -183,7 +183,7 @@ class BaseResource(Base):
         s.flush()
         return existing
     
-    CHILDREN_ATTRS = ('records', 'fields_list', 'values_list',)
+    CHILDREN_ATTRS = ('records', 'fields_list', 'values_list', 'media_list',)
     PARENT_ATTRS = ('form', 'record',)
     def remove(self, session):
         self.removed = True

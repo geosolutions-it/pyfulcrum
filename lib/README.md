@@ -427,6 +427,7 @@ positional arguments:
 Sample invocations:
 
  * list removed records
+
 ```
 $ ./runfulcrum.sh listremoved records --format str
 
