@@ -134,6 +134,7 @@ Following endpoints are available:
 
 Each endpoint can be served in varions formats. Format can be controlled by setting `format` query param. By default, `json` format is used. Data can be retrived in several formats:
 
+
  Format | Description | Returns only spatial-enabled items 
  --- | --- | --- | --- 
  `raw` | Raw Fulcrum API payload for objects stored | No 
@@ -143,12 +144,14 @@ Each endpoint can be served in varions formats. Format can be controlled by sett
  `kml` | This will return `KML` format with records that have proper spatial location set. Note, this will work only for Records, and it doesn't support paging. | Yes 
  `shp` | this will return `ESRI Shapefile` format with records that have proper spatial location set. Note, this will work only for Records, and it doesn't support paging. | Yes 
 
+
 Summary of supported formats per resource type
+
 
  Resource type | URL | formats | Spatial-aware | allowed filtering args 
  --- | --- | --- | --- 
  Forms | `/api/forms/` | `raw`, `json`, `csv` | No | `form_id` 
- Records | `/api/records/ | `raw`, `json`, `geojson`, `kml`, `shp` | Yes | `form_id`, `record_id`, `created_since`, `created_before`, `updated_since`, `updated_before` 
+ Records | `/api/records/` | `raw`, `json`, `geojson`, `kml`, `shp` | Yes | `form_id`, `record_id`, `created_since`, `created_before`, `updated_since`, `updated_before` 
  Projects | `/api/projects/` | `raw`, `json`, `csv` | No | - 
  Photos | `/api/photos/` | `raw`, `json`, `csv` | No | `record_id`, `form_id` 
  Audio | `/api/audio/` | `raw`, `json`, `csv` | No | `record_id`, `form_id` 
