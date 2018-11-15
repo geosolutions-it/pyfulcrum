@@ -420,6 +420,8 @@ class Record(BaseResource):
         out = []
         if url_params.get('form_id'):
             out.append(cls.form_id == url_params['form_id'])
+        if url_params.get('record_id'):
+            out.append(cls.id == url_params['record_id'])
 
         if url_params.get('created_before'):
             out.append(cls.created_at < url_params['created_before'])
