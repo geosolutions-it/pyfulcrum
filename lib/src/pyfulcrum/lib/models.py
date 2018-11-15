@@ -375,6 +375,8 @@ class Record(BaseResource):
                 media[m.id] = [m]
         out = {}
         for val in self.values_list:
+            if val.removed:
+                continue
             fval = val.get_value(storage)
             out[fval['label']] = fval
         return out
@@ -393,6 +395,8 @@ class Record(BaseResource):
     @classmethod
     def _post_payload(cls, instance, payload, session, client, storage):
         session.add(instance)
+        session.flush()
+        session.query(Value).filter(Value.record_id== instance.id).update({Value.removed:True})
         session.flush()
 
         for field_id, field_value in payload['form_values'].items():
