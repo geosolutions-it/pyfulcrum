@@ -469,10 +469,13 @@ class Value(BaseResource):
         # fetch media automatically
         fdef = Field.get(instance.field_id, session=session)
         mk = fdef.media_key
-        if mk and isinstance(instance.value, list):
+        if mk and instance.value:
+            values = instance.value
+            if isinstance(values, dict):
+                values = [values]
             media_type = fdef.media_type
             mclient = getattr(client, media_type, None)
-            for media in instance.value:
+            for media in values:
                 media_id = media[mk]
                 if mclient:
                     data = mclient.find(media_id)
