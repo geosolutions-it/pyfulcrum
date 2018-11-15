@@ -28,7 +28,7 @@ class FormatConverter(BaseConverter):
     """
     Allows to validate output format
     """
-    formats = ('json', 'raw', 'geojson', 'csv', 'kml', 'shp',)
+    formats = ('json', 'raw', 'geojson', 'csv', 'kml', 'shp', 'shapefile',)
 
     @classmethod
     def to_python(cls, value):
@@ -50,6 +50,12 @@ def add_resources_converter(state):
 api.record_once(add_resources_converter)
 
 
+def records_only(resource_name, format):
+    if resource_name != 'records':
+        abort(Response("Resource type {} cannot be serialized to {} format"
+                       .format(resource_name, format), status=400))
+
+
 @api.route('/api/<resource:resource_name>/', methods=['GET'])
 def list_resources(resource_name):
     config = current_app.config.get_namespace('API_')
@@ -65,7 +71,7 @@ def list_resources(resource_name):
     with api_manager:
         res = api_manager.get_manager(resource_name)
         if not res:
-            abort(Response("Resource not found: {}".format(resource_name), status_code=404))
+            abort(Response("Resource not found: {}".format(resource_name), status=404))
         url_params = request.args
         page = int(url_params.get('page') or 0)
         per_page = int(url_params.get('per_page') or PER_PAGE)
@@ -95,9 +101,7 @@ def list_resources(resource_name):
             
 
         elif format == 'geojson':
-            if resource_name != 'records':
-                abort(400)
-
+            records_only(resource_name, 'geojson')
             features = {'type': 'FeaturesCollection',
                         'features': [geojson_item(r, api_manager.storage) for r in 
                                      paged],
@@ -108,6 +112,7 @@ def list_resources(resource_name):
 
             return jsonify(features)
         elif format == 'kml':
+            records_only(resource_name, 'kml')
             kml_data = format_kml(q, api_manager.storage, multiple=True)
             return Response(kml_data, mimetype='application/vnd.google-earth.kml+xml',
                             headers={'Content-Disposition': "attachment;filename={}.kml".format(resource_name)})
@@ -116,7 +121,8 @@ def list_resources(resource_name):
             return Response(csv_data, mimetype='text/csv',
                             headers={'Content-Disposition': "attachment;filename={}.csv".format(resource_name)})
 
-        elif format == 'shp':
+        elif format in ('shp', 'shapefile'):
+            records_only(resource_name, 'shapefile')
             shapefile = format_shapefile(q, api_manager.storage, multiple=True)
             return Response(shapefile,
                             mimetype='application/zip',
