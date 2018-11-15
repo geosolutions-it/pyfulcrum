@@ -145,15 +145,15 @@ Each endpoint can be served in varions formats. Format can be controlled by sett
 
 Summary of supported formats per resource type
 
- Resource type | URL | formats | Spatial-aware  | allowed filtering args
- --- | --- | --- | ---
- Forms | `/api/forms/` | `raw`, `json`, `csv` | No | `form_id`
- Records | `/api/records/ | `raw`, `json`, `geojson`, `kml`, `shp` | Yes | `form_id`, `record_id`, `created_since`, `created_before`, `updated_since`, `updated_before`
- Projects | `/api/projects/` | `raw`, `json`, `csv` | No | -
- Photos | `/api/photos/` | `raw`, `json`, `csv` | No | `record_id`, `form_id`
- Audio | `/api/audio/` | `raw`, `json`, `csv` | No | `record_id`, `form_id`
- Videos | `/api/videos/` | `raw`, `json`, `csv` | No | `record_id`, `form_id`
- Signatures | `/api/signatures/` | `raw`, `json`, `csv` | No | `record_id`, `form_id`
+ Resource type | URL | formats | Spatial-aware  | allowed filtering args 
+ --- | --- | --- | --- 
+ Forms | `/api/forms/` | `raw`, `json`, `csv` | No | `form_id` 
+ Records | `/api/records/ | `raw`, `json`, `geojson`, `kml`, `shp` | Yes | `form_id`, `record_id`, `created_since`, `created_before`, `updated_since`, `updated_before` 
+ Projects | `/api/projects/` | `raw`, `json`, `csv` | No | - 
+ Photos | `/api/photos/` | `raw`, `json`, `csv` | No | `record_id`, `form_id` 
+ Audio | `/api/audio/` | `raw`, `json`, `csv` | No | `record_id`, `form_id` 
+ Videos | `/api/videos/` | `raw`, `json`, `csv` | No | `record_id`, `form_id` 
+ Signatures | `/api/signatures/` | `raw`, `json`, `csv` | No | `record_id`, `form_id` 
 
 
 Additionally, each endpoint supports (excluding various exceptions) paging with following query params:
