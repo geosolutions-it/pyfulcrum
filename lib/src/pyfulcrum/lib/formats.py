@@ -220,19 +220,18 @@ def format_csv(items, storage, multiple=False):
         item_row = items[0]
 
     record_fields = {}
-    for fname in item_row.payload.keys():
-        # id was already added
-        if fname == 'id': 
-            continue
 
-        # form values is a dictionary, we need to extract each field
-        if fname == 'form_values':
-            for fdef in item_row.form.fields_list:
-                fname = fdef.label
-                record_fields[fname] = fdef.id
-                header.append('field.{}'.format(fname))
-        else:
-            header.append(fname)
+    for fname in item_row.payload.keys():
+        # skip id, form_values will be processed later
+        if fname in ('id', 'form_values',): 
+            continue
+        header.append(fname)
+    if item_row.__class__.__name__ == 'Record':
+        for field in item_row.form.fields_list:
+            label = field.label
+            record_fields[label] = field.id
+            header.append('field.{}'.format(label))
+
     header = header[:1] + list(sorted(header[1:]))
     w.writerow(header)
 
@@ -245,7 +244,7 @@ def format_csv(items, storage, multiple=False):
                 fid = record_fields[fname]
                 row.append(payload['form_values'].get(fid))
             else:
-                row.append(payload[k])
+                row.append(payload.get(k))
         w.writerow(row)
     return bytes(out.getvalue(), 'utf-8')
 

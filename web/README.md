@@ -133,12 +133,27 @@ Following endpoints are available:
 
 Each endpoint can be served in varions formats. Format can be controlled by setting `format` query param. By default, `json` format is used. Data can be retrived in several formats:
 
-* `raw` - Raw Fulcrum API payload for objects stored.
-* `json` - PyFulcrum-flavor of JSON for objects stored. This will contain processed media links.
-* `csv` - Returns CSV with all objects for resource, and it doesn't support paging.
-* `geojson` - This will return `GeoJSON` `FeatureCollection` with records that have proper spatial location set. Note, this will work only for `/api/records`.
-* `kml` - This will return `KML` format with records that have proper spatial location set. Note, this will work only for `/api/records`, and it doesn't support paging.
-* `shp` - this will return `ESRI Shapefile` format with records that have proper spatial location set. Note, this will work only for `/api/records`, and it doesn't support paging.
+ Format | Description | Returns only spatial-enabled items
+ --- | --- | --- | --- 
+ `raw` | Raw Fulcrum API payload for objects stored | No
+ `json` | PyFulcrum-flavor of JSON for objects stored. This will contain processed media links. | No
+ `csv` | Returns CSV with all objects for resource, and it doesn't support paging. | No
+ `geojson` | This will return `GeoJSON` `FeatureCollection` with records that have proper spatial location set. Note, this will work only for Records. | Yes
+ `kml` | This will return `KML` format with records that have proper spatial location set. Note, this will work only for Records, and it doesn't support paging. | Yes
+ `shp` | this will return `ESRI Shapefile` format with records that have proper spatial location set. Note, this will work only for Records, and it doesn't support paging. | Yes
+
+Summary of supported formats per resource type
+
+ Resource type | URL | formats | Spatial-aware 
+ --- | --- | --- | ---
+ Forms | `/api/forms/` | `raw`, `json`, `csv` | No
+ Records | `/api/records/ | `raw`, `json`, `geojson`, `kml`, `shp` | Yes
+ Projects | `/api/projects/` | `raw`, `json`, `csv` | No
+ Photos | `/api/photos/` | `raw`, `json`, `csv` | No
+ Audio | `/api/audio/` | `raw`, `json`, `csv` | No
+ Videos | `/api/videos/` | `raw`, `json`, `csv` | No
+ Signatures | `/api/signatures/` | `raw`, `json`, `csv` | No
+
 
 Additionally, each endpoint supports (excluding various exceptions) paging with following query params:
 

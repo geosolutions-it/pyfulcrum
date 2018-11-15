@@ -70,7 +70,7 @@ class BaseObjectManager(object):
         if obj:
             return obj.remove(self.session)
 
-    def list(self, cached=True, generator=False, ignore_existing=False, flush=False, *args, **kwargs):
+    def list(self, cached=True, generator=False, ignore_existing=False, flush=False, is_spatial=False, *args, **kwargs):
         """
         Return list of resources.
         This will return list or generator of resources in local db.
@@ -133,6 +133,8 @@ class BaseObjectManager(object):
                         v = self.get(i[self.identity_key], cached=False)
                         if flush:
                             self.session.commit()
+                        if is_spatial and hasattr(self.model, 'point') and not v.point:
+                            continue
                         yield v
                     page +=1
                     url_params['page'] = page
@@ -144,8 +146,8 @@ class BaseObjectManager(object):
         if kwargs.get('url_params'):
             up = kwargs.get('url_params')
             params = self.model.get_q_params(up)
-            return self.session.query(self.model).order_by('updated_at').filter(self.model.removed == False).filter(*params)
-        return self.session.query(self.model).order_by('updated_at').filter(self.model.removed == False)
+            return self.get_query(is_spatial=is_spatial).order_by('updated_at').filter(self.model.removed == False).filter(*params)
+        return self.get_query(is_spatial=is_spatial).order_by('updated_at').filter(self.model.removed == False)
 
     def _list_item(self, item):
         return item
@@ -154,13 +156,24 @@ class BaseObjectManager(object):
         """
         Return removed items
         """
+        
         if kwargs.get('url_params'):
             up = kwargs.get('url_params')
             params = self.model.get_q_params(up)
 
-            return self.session.query(self.model).order_by('updated_at').filter(self.model.removed == True).filter(*params)
-        return self.session.query(self.model).order_by('updated_at').filter(self.model.removed == True)
+            return self.get_query().order_by('updated_at').filter(self.model.removed == True).filter(*params)
+        return self.get_query().order_by('updated_at').filter(self.model.removed == True)
 
+
+    def get_query(self, session=None, is_spatial=False):
+        if session is None:
+            session = self.session
+        q = session.query(self.model)
+        if is_spatial and getattr(self.model, 'point', None) is not None:
+            q = q.filter(self.model.point != None)
+        if self.default_item_args:
+            return q.filter_by(**self.default_item_args)
+        return q
 
     def sync(self):
         """

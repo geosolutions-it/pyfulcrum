@@ -67,7 +67,7 @@ def list_resources(resource_name):
         format = FormatConverter.to_python(request.args.get('format'))
     except ValidationError:
         format = 'json'
-
+    is_spatial = resource_name in ('kml', 'geojson', 'shp', 'shapefile',) 
     with api_manager:
         res = api_manager.get_manager(resource_name)
         if not res:
@@ -76,7 +76,8 @@ def list_resources(resource_name):
         page = int(url_params.get('page') or 0)
         per_page = int(url_params.get('per_page') or PER_PAGE)
         q = res.list(cached=True,
-                     url_params=url_params)
+                     url_params=url_params,
+                     is_spatial=is_spatial)
         count = q.count()
         total_pages = math.ceil(count/per_page)
         paged = q.offset(page * per_page).limit(per_page)
@@ -113,17 +114,17 @@ def list_resources(resource_name):
             return jsonify(features)
         elif format == 'kml':
             records_only(resource_name, 'kml')
-            kml_data = format_kml(q, api_manager.storage, multiple=True)
+            kml_data = format_kml(paged, api_manager.storage, multiple=True)
             return Response(kml_data, mimetype='application/vnd.google-earth.kml+xml',
                             headers={'Content-Disposition': "attachment;filename={}.kml".format(resource_name)})
         elif format == 'csv':
-            csv_data = format_csv(q, api_manager.storage, multiple=True)
+            csv_data = format_csv(paged, api_manager.storage, multiple=True)
             return Response(csv_data, mimetype='text/csv',
                             headers={'Content-Disposition': "attachment;filename={}.csv".format(resource_name)})
 
         elif format in ('shp', 'shapefile'):
             records_only(resource_name, 'shapefile')
-            shapefile = format_shapefile(q, api_manager.storage, multiple=True)
+            shapefile = format_shapefile(paged, api_manager.storage, multiple=True)
             return Response(shapefile,
                             mimetype='application/zip',
                             headers={'Content-Disposition': "attachment;filename={}.zip".format(resource_name)})
