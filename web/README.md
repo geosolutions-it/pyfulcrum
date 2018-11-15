@@ -43,6 +43,7 @@ PyFulcrum web application requires working installation of PyFulcrum lib. Follow
     Target location depends on your operating system, but usually Debian-derived systems use `/etc/uwsgi/apps-enabled/` directory to store application configuration, while RH-based use `/etc/uwsgi.d/` for the same purpose. Note that Debian-derived systems usually enforce socket path for uwsgi applications.
 
 1. Configure nginx. Nginx requires vhost configuration file. Sample file is in `repo/pyfulcrum/nginx.site.conf`. You need to adjust `server_name`, `root` and upstream sockets locations to match your deployment. Note that API application doesn't require any authentication, so you may want to enforce user authentication in web server for this purpose. 
+
     Target location depends on your operating system, but usually Debian-derived systems use `/etc/nginx/sites-enabled/` directory to store vhost configuration, while RH-based use `/etc/nginx/conf.d` for the same purpose.
 
 1. Restart uwsgi and nginx services:
@@ -144,15 +145,15 @@ Each endpoint can be served in varions formats. Format can be controlled by sett
 
 Summary of supported formats per resource type
 
- Resource type | URL | formats | Spatial-aware 
+ Resource type | URL | formats | Spatial-aware  | allowed filtering args
  --- | --- | --- | ---
- Forms | `/api/forms/` | `raw`, `json`, `csv` | No
- Records | `/api/records/ | `raw`, `json`, `geojson`, `kml`, `shp` | Yes
- Projects | `/api/projects/` | `raw`, `json`, `csv` | No
- Photos | `/api/photos/` | `raw`, `json`, `csv` | No
- Audio | `/api/audio/` | `raw`, `json`, `csv` | No
- Videos | `/api/videos/` | `raw`, `json`, `csv` | No
- Signatures | `/api/signatures/` | `raw`, `json`, `csv` | No
+ Forms | `/api/forms/` | `raw`, `json`, `csv` | No | `form_id`
+ Records | `/api/records/ | `raw`, `json`, `geojson`, `kml`, `shp` | Yes | `form_id`, `record_id`, `created_since`, `created_before`, `updated_since`, `updated_before`
+ Projects | `/api/projects/` | `raw`, `json`, `csv` | No | -
+ Photos | `/api/photos/` | `raw`, `json`, `csv` | No | `record_id`, `form_id`
+ Audio | `/api/audio/` | `raw`, `json`, `csv` | No | `record_id`, `form_id`
+ Videos | `/api/videos/` | `raw`, `json`, `csv` | No | `record_id`, `form_id`
+ Signatures | `/api/signatures/` | `raw`, `json`, `csv` | No | `record_id`, `form_id`
 
 
 Additionally, each endpoint supports (excluding various exceptions) paging with following query params:
