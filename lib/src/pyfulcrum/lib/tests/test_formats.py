@@ -134,6 +134,6 @@ class FormatTestCase(BaseTestCase):
         self.api_manager.records.list(cached=False)
         self.api_manager.photos.list(cached=False)
 
-        r = self.api_manager.photos.get("622997aa-929f-4758-bd86-859cc7435e3f")
+        r = self.api_manager.forms.get("7a0c3378-b63a-4707-b459-df499698f23c")
         f = FORMATS['shapefile']
         self.assertRaises(TypeError, f, r, self._storage, False)

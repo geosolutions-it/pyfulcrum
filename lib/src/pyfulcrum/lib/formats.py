@@ -18,7 +18,7 @@ ogr.UseExceptions()
 print_attrs = ('id', 'status', 'name', 'media_type', 'content_type', 'form_id', 'record_id', 'records_count', 'values_processed', 'created_at', 'updated_at',)
 
 
-def formatter(allowed_classes=None):
+def formatter(*allowed_classes):
     """
     Decorator for formatter callable - provides
     common checks and returns if item passed is
@@ -71,14 +71,9 @@ def formatter(allowed_classes=None):
                     first_item = items[0]
                     items = chain(items)
                 cls_name = first_item.__class__.__name__
-                if isinstance(allowed_classes, list):
-                    if cls_name not in allowed_classes:
-                        raise TypeError("Cannot use class {} with {}"
-                                        .format(cls_name, f.__name__))
-                else:
-                    if cls_name != allowed_classes:
-                        raise TypeError("Cannot use class {} with {}"
-                                        .format(cls_name, f.__name__))
+                if cls_name not in allowed_classes:
+                    raise TypeError("Cannot use class {} with {}"
+                                    .format(cls_name, f.__name__))
                      
                 if not is_query:
                     items = chain([first_item], items)
@@ -149,7 +144,7 @@ def geojson_item(obj, storage):
 
     props = {'id': obj.id}
     props.update(obj.payload)
-    props.pop('form_values')
+    props.pop('form_values', None)
     try:
         props.update(obj.get_values(storage))
         # list of fields that holds form values
@@ -196,7 +191,7 @@ def format_raw(items, storage, multiple=False):
     return json.dumps(out)
 
 
-@formatter('Record')
+@formatter('Record', 'Media')
 def format_geojson(items, storage, multiple=False):
     out = []
     for item in items:
@@ -249,7 +244,7 @@ def format_csv(items, storage, multiple=False):
     return bytes(out.getvalue(), 'utf-8')
 
 
-@formatter('Record')
+@formatter('Record', 'Media')
 def format_shapefile(items, storage, multiple=False):
     """
     Output to shapefile as zip
@@ -261,7 +256,7 @@ def format_shapefile(items, storage, multiple=False):
                        use_zip=True)
 
 
-@formatter('Record')
+@formatter('Record', 'Media')
 def format_kml(items, storage, multiple=False):
     """
     Output to shapefile as zip
@@ -277,25 +272,32 @@ def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use
     item_class = item_row.__class__.__name__
 
     # need to extract field names from first item in list
-    item_defs = [('id', ogr.FieldDefn('id', ogr.OFTString), 0, None,)]
-   
-    item_idx = 1
+    item_idx = 0
+    # hack for kml, which injects name and definition before anything else
+    if driver == 'KML':
+        item_idx += 2
+    item_defs = [('id', ogr.FieldDefn('id', ogr.OFTString), item_idx, None,)]
+    item_idx += 1
     for fname in item_row.payload.keys():
         # id was already added
         if fname in ('id', 'form_values',): 
             continue
-        
         # warning: SHP has silly limitation on field name, it will
         # truncate longer names. Better to use GeoJSON instead
         item_defs.append((fname, ogr.FieldDefn(fname, ogr.OFTString), item_idx, None))
         item_idx += 1
-        
-    for field in item_row.form.fields_list:
-        label = field.label
-        field_id = field.id
-        item_defs.append(('field.{}'.format(label), ogr.FieldDefn('f_{}'.format(label), ogr.OFTString), item_idx, field_id))
-        item_idx += 1
 
+    # for media, we'll generate  url paths and payload dump
+    if hasattr(item_row, 'get_paths'):
+        for size in item_row.sizes:
+            item_defs.append(('url.{}'.format(size), ogr.FieldDefn('u_{}'.format(size), ogr.OFTString), item_idx, None))
+            item_idx += 1
+    else:
+        for field in item_row.form.fields_list:
+            label = field.label
+            field_id = field.id
+            item_defs.append(('field.{}'.format(label), ogr.FieldDefn('f_{}'.format(label), ogr.OFTString), item_idx, field_id))
+            item_idx += 1
     basename = '{}s'.format(item_class.lower())
     outfile = '{}.{}'.format(basename, extension)
     zfile = '{}.zip'.format(outfile)
@@ -311,6 +313,8 @@ def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use
         # create layer definitions from fields from above
         for fname, fdef, fidx, field_id in item_defs:
             layer.CreateField(fdef)
+        layer.CreateField(ogr.FieldDefn('type', ogr.OFTString))
+
         ldef = layer.GetLayerDefn()
         for item in chain([item_row], items):
 
@@ -319,7 +323,12 @@ def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use
                 continue
 
             feat = ogr.Feature(layer.GetLayerDefn())
-            values = dict( (v.field_id, v) for v in item.values_list)
+            has_values_list = hasattr(item, 'values_list')
+            if has_values_list:
+                values = dict( (v.field_id, v) for v in item.values_list)
+            else:
+                values = {}
+            
             # populate properties
             for fname, fdef, fidx, field_id in item_defs:
                 if fname == 'id':
@@ -334,13 +343,18 @@ def _export_ogr(items, storage, multiple=False, driver=None, extension=None, use
                         value = json.dumps(field_data.value)
                     else:
                         value = json.dumps(None)
+
+                elif fname.startswith('url.'):
+                    value = item.get_url(storage, fname[4:])
+
                 else:
-                    value = item.payload[fname]
+                    value = item.payload.get(fname)
                 
                 # definition expects string here
                 if isinstance(value, (list, dict,)):
                     value = json.dumps(value)
                 feat.SetField(fidx, value)
+            feat.SetField(fidx + 1, item.__class__.__name__)
             if isinstance(item.point, str):
                 point = item.point
                 geom = ogr.CreateGeometryFromWkt(point)

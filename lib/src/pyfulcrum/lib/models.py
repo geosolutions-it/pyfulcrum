@@ -591,6 +591,10 @@ class Media(BaseResource):
         f['point'] = point
         return payload
 
+    @property
+    def sizes(self):
+        return self.SIZES[self.media_type]
+
     def get_path(self, storage, size):
         """
         Returns size-specific path to media file
@@ -626,7 +630,7 @@ class Media(BaseResource):
         Return mapping of size->{path, url} for this media.
         """
         out = {}
-        for s in self.SIZES[self.media_type]:
+        for s in self.sizes:
             out[s] = {'path': self.get_path(storage, s),
                       'url': self.get_url(storage, s)}
         return out
@@ -661,6 +665,15 @@ class Media(BaseResource):
             out.append(cls.form_id == url_params['form_id'])
         if url_params.get('record_id'):
             out.append(cls.record_id == url_params['record_id'])
+
+        if url_params.get('photo_id'):
+            out.append(and_(cls.id==url_params['photo_id'], cls.media_type == 'photo'))
+        if url_params.get('video_id'):
+            out.append(and_(cls.id==url_params['video_id'], cls.media_type == 'video'))
+        if url_params.get('audio_id'):
+            out.append(and_(cls.id==url_params['audio_id'], cls.media_type == 'audio'))
+        if url_params.get('signature_id'):
+            out.append(and_(cls.id==url_params['signature_id'], cls.media_type == 'signature'))
         return out
 
 

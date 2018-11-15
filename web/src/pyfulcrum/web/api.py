@@ -50,8 +50,8 @@ def add_resources_converter(state):
 api.record_once(add_resources_converter)
 
 
-def records_only(resource_name, format):
-    if resource_name != 'records':
+def spatial_only(resource_name, format):
+    if resource_name not in  ('records', 'photos',):
         abort(Response("Resource type {} cannot be serialized to {} format"
                        .format(resource_name, format), status=400))
 
@@ -102,7 +102,7 @@ def list_resources(resource_name):
             
 
         elif format == 'geojson':
-            records_only(resource_name, 'geojson')
+            spatial_only(resource_name, 'geojson')
             features = {'type': 'FeatureCollection',
                         'features': [geojson_item(r, api_manager.storage) for r in 
                                      paged],
@@ -113,7 +113,7 @@ def list_resources(resource_name):
 
             return jsonify(features)
         elif format == 'kml':
-            records_only(resource_name, 'kml')
+            spatial_only(resource_name, 'kml')
             kml_data = format_kml(paged, api_manager.storage, multiple=True)
             return Response(kml_data, mimetype='application/vnd.google-earth.kml+xml',
                             headers={'Content-Disposition': "attachment;filename={}.kml".format(resource_name)})
@@ -123,7 +123,7 @@ def list_resources(resource_name):
                             headers={'Content-Disposition': "attachment;filename={}.csv".format(resource_name)})
 
         elif format in ('shp', 'shapefile'):
-            records_only(resource_name, 'shapefile')
+            spatial_only(resource_name, 'shapefile')
             shapefile = format_shapefile(paged, api_manager.storage, multiple=True)
             return Response(shapefile,
                             mimetype='application/zip',

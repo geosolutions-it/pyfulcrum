@@ -143,11 +143,13 @@ class BaseObjectManager(object):
                 return gen()
             else:
                 list(gen())
+
+        q = self.get_query(is_spatial=is_spatial).order_by('updated_at').filter(self.model.removed == False)
         if kwargs.get('url_params'):
             up = kwargs.get('url_params')
             params = self.model.get_q_params(up)
-            return self.get_query(is_spatial=is_spatial).order_by('updated_at').filter(self.model.removed == False).filter(*params)
-        return self.get_query(is_spatial=is_spatial).order_by('updated_at').filter(self.model.removed == False)
+            q = q.filter(*params)
+        return q
 
     def _list_item(self, item):
         return item
