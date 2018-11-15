@@ -294,7 +294,7 @@ Sample invocations:
 
 Below is a list of resources and accepted url params:
 
- Resource type | URL params | meaning 
+ Resource type | URL params | Meaning 
  --- | --- | --- 
  `forms` | `form_id` | filter list to show only form with specific id. equivalent of `get` command 
  `records` | `form_id` | Get records only ones related to specific form 
