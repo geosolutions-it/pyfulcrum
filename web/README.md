@@ -53,6 +53,29 @@ PyFulcrum web application requires working installation of PyFulcrum lib. Follow
     service nginx restart
     ```
 
+Application deployed in this way can be updated in following way:
+
+1. Go to repository directory and update code base:
+
+    ```
+    cd repo/pyfulcrum
+    git pull
+    ```
+
+1. Run migrations if needed:
+
+    ```
+    cd repo/pyfulcrum/lib
+    ../../venv/bin/alembic -c local-db.ini upgrade head
+    ```
+
+1. Update web application `main.py` file to enforce reload of uwsgi, so it will use new code:
+
+    ```
+    touch repo/pyfulcrum/web/src/pyfulcrum/web/main.py 
+    ```
+
+
 ### Configuration
 
 PyFulcrum webapp blueprints require configuration data, which provides database url, path to storage/storage base url and Fulcrum API key. Due to a fact that components are implemented as blueprints, they expect configuration will be provided by application that incorporates them as blueprints. In any case, each blueprint requires specific keys to be present in `current_app.config` mapping.
@@ -197,8 +220,28 @@ GET http://your.server/api/records?format=raw&form_id=xxxxXXXxxxx
 GET http://your.server/api/records?format=raw&form_id=xxxxXXXxxxx&page=9
 ```
 
-* retrive list of records as shapefile for given form:
+* retrive list of records as shapefile for given form. Because this list response is paged, this will produce shapefile with 50 features on it.:
 
 ```
 GET http://your.server/api/records?format=shp&form_id=xxxxXXXxxxx
 ```
+
+* retrive list of at most 500 records as shapefile for given form. You can generate another 500 records by modifying `page` parameter:
+
+```
+GET http://your.server/api/records?format=shp&form_id=xxxxXXXxxxx&per_page=500&page=0
+```
+
+Note that spatial formats, especially shapefile and kml, take significant time to create. If number of records is too big, server may return timeout (http 502 error) instead.
+
+* Retrive specific record from records list:
+
+```
+GET http://your.server/api/records/?format=json&form_id=xxxxXXXxxxxx&record_id=yyyyYYYyyyyy
+```
+
+## Notes
+
+### Offloading data synchronization to task queue
+
+Webhook implementation is synchronous. At the moment, it’s fast enough to work in that mode. However, if in the future this solution would turn out to be underperformant, part of webhook handling logic can be moved to task queue. Flask has quite good [integration with Celery](http://flask.pocoo.org/docs/1.0/patterns/celery/) and [RQ](https://flask-rq2.readthedocs.io/en/latest/). In order to integrate existing code, `pyfulcrum.web.webhooks._handle_webhook()` should be decorated with proper task decorator, and called from `pyfulcrum.web.webhooks.fulcrum_call` as asynchronous task. This requires handling task queue configuration in web application that is calling webhook blueprint, and webhook code should be updated as well. Also, Redis would be needed as additional deployment component.
