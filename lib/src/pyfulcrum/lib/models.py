@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import json
+import logging
+
 from datetime import datetime
 from sqlalchemy import (Column, Integer, String,
                         DateTime, Numeric, ForeignKey,
@@ -25,6 +27,7 @@ Base = declarative_base(metadata=md)
 # "created_at": "2015-04-16T13:20:10Z",
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
+log = logging.getLogger(__name__)
 
 class BaseResource(Base):
     """
@@ -412,7 +415,8 @@ class Record(BaseResource):
         for field_id, field_value in payload['form_values'].items():
             fdef = Field.get(field_id, session=session)
             if fdef is None:
-                raise ValueError("There's no field definition for id {}".format(field_id))
+                log.info("There's no field definition for id %s", field_id)
+                continue
             f = {}
             f['type'] = fdef.type
             f['record_id'] = instance.id
@@ -423,7 +427,7 @@ class Record(BaseResource):
             f['created_at'] = instance.created_at
             f['updated_at'] = instance.updated_at
             f['id'] = '{}_{}'.format(instance.id, field_id)
-            Value.from_payload(f, session, client, storage)
+            Value.from_payload(f, session, client, storage, reset_removed=True)
             
        # cleanup payload for saving
         payload.pop('point', None)
@@ -496,8 +500,6 @@ class Value(BaseResource):
                     pdata = data[media_type.rstrip('s')].copy()
                     pdata['media_type'] = media_type.rstrip('s')
                     media = Media.from_payload(pdata, session, client, storage)
-
-
 
     def get_value(self, storage):
         """
