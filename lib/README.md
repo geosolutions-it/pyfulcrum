@@ -361,8 +361,11 @@ Sample invocations:
 ./runfulcrum.sh remove records 29ac7df1-69e8-4227-bb1c-9040196d3d4c
 ```
 
-** Important note** Remove command will change only local state. It will not remove any data with Fulcrum API. If a resource is removed, all children resorces are also removed. For example, if you remove specific form, all records will be marked as removed as well, and won't be shown in list/get command.
-If operator or webhook will try to update resource which parent is marked as removed, error message will be returned instead.
+**Note**: Remove command will change only local state. It will not remove any data with Fulcrum API. If a resource is removed, all children resorces are also removed. For example, if you remove specific form, all records will be marked as removed as well, and won't be shown in list/get command.
+
+**Note**: Physical media files (original, thumbs) that are connected to any media resource are not removed when parent resource (Form, Record, Value) is marked as removed.
+
+**Note**: If operator or webhook will try to update resource which parent is marked as removed, error message will be returned instead.
 To perform restore of removed objects, most parent object (usually a form) must be restored with `list` or `get` command.
 
 
