@@ -165,7 +165,7 @@ Each endpoint can be served in varions formats. Format can be controlled by sett
  `csv` | Returns CSV with all objects for resource, and it doesn't support paging. | No 
  `geojson` | This will return `GeoJSON` `FeatureCollection` with records that have proper spatial location set. Note, this will work only for Records. | Yes 
  `kml` | This will return `KML` format with records that have proper spatial location set. Note, this will work only for Records, and it doesn't support paging. | Yes 
- `shp` | this will return `ESRI Shapefile` format with records that have proper spatial location set. Note, this will work only for Records, and it doesn't support paging. | Yes 
+ `shp` | this will return `ESRI Shapefile` format with records that have proper spatial location set. Note, this will work only for Records, and it doesn't support paging. | Yes
 
 
 Summary of supported formats per resource type
@@ -179,7 +179,7 @@ Summary of supported formats per resource type
  Photos | `/api/photos/` | `raw`, `json`, `csv` | No | `record_id`, `form_id` 
  Audio | `/api/audio/` | `raw`, `json`, `csv` | No | `record_id`, `form_id` 
  Videos | `/api/videos/` | `raw`, `json`, `csv` | No | `record_id`, `form_id` 
- Signatures | `/api/signatures/` | `raw`, `json`, `csv` | No | `record_id`, `form_id` 
+ Signatures | `/api/signatures/` | `raw`, `json`, `csv` | No | `record_id`, `form_id`
 
 
 Additionally, each endpoint supports (excluding various exceptions) paging with following query params:
