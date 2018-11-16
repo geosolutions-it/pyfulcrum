@@ -239,10 +239,13 @@ class Form(BaseResource):
         # but first, we need to add this form to db
         session.add(instance)
         session.flush()
+        session.query(Field).filter(Field.form_id== instance.id).update({Field.removed:True})
+        session.flush()
         for f in payload['elements']:
             f['form_id'] = instance.id
             f['id'] = f['key']
             Field.from_payload(f, session, client, storage)
+
         return
 
     @classmethod
