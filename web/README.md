@@ -159,7 +159,7 @@ Each endpoint can be served in varions formats. Format can be controlled by sett
 
 
  Format | Description | Returns only spatial-enabled items 
- --- | --- | --- | --- 
+ ------ | ----------- | --- 
  `raw` | Raw Fulcrum API payload for objects stored | No 
  `json` | PyFulcrum-flavor of JSON for objects stored. This will contain processed media links. | No 
  `csv` | Returns CSV with all objects for resource, and it doesn't support paging. | No 
@@ -172,7 +172,7 @@ Summary of supported formats per resource type
 
 
  Resource type | URL | formats | Spatial-aware | allowed filtering args 
- --- | --- | --- | --- 
+ ------------- | --- | ------- | ------------  | ---
  Forms | `/api/forms/` | `raw`, `json`, `csv` | No | `form_id` 
  Records | `/api/records/` | `raw`, `json`, `geojson`, `kml`, `shp` | Yes | `form_id`, `record_id`, `created_since`, `created_before`, `updated_since`, `updated_before` 
  Projects | `/api/projects/` | `raw`, `json`, `csv` | No | - 
