@@ -39,6 +39,7 @@ def webhook_in(name):
                         .format(ptype))
 
     # this can be called outside web process, with task queue
+    log.info("Webhook %s: received %s event for %s", name, ptype, res_id)
     out = fulcrum_call(name, res_name, res_action, res_id, payload)
     return Response(out or 'ok')
 

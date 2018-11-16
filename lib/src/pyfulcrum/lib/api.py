@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
+
 from fulcrum import Fulcrum as FC
 from .models import Session, Base, Project, Form, Record, Media, Field
 from sqlalchemy.engine import Engine, create_engine
 from .storage import Storage
 from .formats import FORMATS
 
+
+log = logging.getLogger(__name__)
 
 PER_PAGE = 50
 
@@ -62,7 +66,7 @@ class BaseObjectManager(object):
             if isinstance(data.get(p), dict):
                 data = data[p]
             data.update(self.default_item_args)
-            return self.model.from_payload(data, self.session, self.client, self.storage)
+            return self.model.from_payload(data, self.session, self.client, self.storage, reset_removed=if_removed)
         return self.model.get(obj_id, session=self.session, if_removed=if_removed)
 
     def remove(self, obj_id, cached=True, *args, **kwargs):
@@ -94,23 +98,36 @@ class BaseObjectManager(object):
                         of results is enabled and 50 items per page are expected.
 
         """
+
+
+        q = self.get_query(is_spatial=is_spatial).filter(self.model.removed == False)
+        
+        # we're calling .search() which by default queries for all items
+        # in collection, which may lead to timeouts for larger data sets.
+        # to avoid that, we'll use paging with 50 items per page.
+        # we have to inject paging params into url_params and loop until
+        # we reach last page.
+        url_params = dict(kwargs.get('url_params') or {})
+        url_params.update(self.default_search_args)
+        url_params['per_page'] = PER_PAGE
+        _page = url_params.get('page')
+        page = _page or 0
+        url_params['page'] = page
+        kwargs['url_params'] = url_params
+        sync_removed = kwargs.pop('sync_removed', True)
+
+        up = kwargs.get('url_params')
+        params = self.model.get_q_params(up)
+        if params:
+            q = q.filter(*params)
+        
         if self.path and not cached:
-            def gen():
-                # we're calling .search() which by default queries for all items
-                # in collection, which may lead to timeouts for larger data sets.
-                # to avoid that, we'll use paging with 50 items per page.
-                # we have to inject paging params into url_params and loop until
-                # we reach last page.
-                url_params = kwargs.get('url_params') or {}
-                url_params.update(self.default_search_args)
-                url_params['per_page'] = PER_PAGE
-                _page = url_params.get('page')
-                page = _page or 0
-                url_params['page'] = page
-                kwargs['url_params'] = url_params
+            def gen(page):
 
                 # initial value, which will be updated during fetch
                 total_pages = page + 1
+                existing = set([])
+                all_items = set([i[0] for i in q.with_entities(self.model.id)])
 
                 while page < total_pages:
                     _items = self._handler.search(*args, **kwargs)
@@ -120,8 +137,11 @@ class BaseObjectManager(object):
                     # sanity checks
                     if not items:
                         break
+                    
                     for i in items:
                         i = self._list_item(i)
+                        item_id = i[self.identity_key]
+                        existing.add(item_id)
                         # need to process full item payload from .find()
                         # because search() returns partial content
                         if ignore_existing in (True, []):
@@ -138,18 +158,19 @@ class BaseObjectManager(object):
                         yield v
                     page +=1
                     url_params['page'] = page
+                    # mark removed 
+                if sync_removed:
+                    to_remove = all_items - existing
+                    log.warning('synchronization for %s: removing %s items', self.model.__name__, len(to_remove))
+                    for id in to_remove:
+                        self.remove(id)
 
+                    #q.filter(self.model.id.notin_(existing))
             if generator:
-                return gen()
+                return gen(page)
             else:
-                list(gen())
-
-        q = self.get_query(is_spatial=is_spatial).order_by('updated_at').filter(self.model.removed == False)
-        if kwargs.get('url_params'):
-            up = kwargs.get('url_params')
-            params = self.model.get_q_params(up)
-            q = q.filter(*params)
-        return q
+                list(gen(page))
+        return q.order_by('updated_at')
 
     def _list_item(self, item):
         return item

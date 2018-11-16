@@ -126,7 +126,7 @@ class BaseResource(Base):
         return payload
 
     @classmethod
-    def from_payload(cls, payload, session, client, storage, reset_removed=True):
+    def from_payload(cls, payload, session, client, storage, reset_removed=False):
         """
         Entry point method for creating/updating instances from
         Fulcrum API payload.
@@ -146,12 +146,17 @@ class BaseResource(Base):
         @returns BaseResource instance
         """
         s = session
-
+        
         # hook for preprocessing class-specific payload
         payload = cls._pre_payload(payload, s, client, storage)
 
         id = payload['id']
         existing = cls.get(id, session=s, if_removed=True)
+        
+        if existing and existing.removed and not reset_removed:
+            raise ValueError("Cannot process payload for {}: {}, because it's marked as removed"
+                             .format(cls.__name__, id))
+        
         if not existing:
             existing = cls(id=id)
         for m in cls.MAPPED_COLUMNS:
@@ -168,13 +173,15 @@ class BaseResource(Base):
                 phandler = getattr(existing, pname, None)
                 if phandler and phandler.removed:
                     raise ValueError("Cannot restore {}: parent {} is removed".format(existing, phandler))
+            current = existing.removed 
             existing.removed = False
-            for cname in cls.CHILDREN_ATTRS:
-                chandler = getattr(existing, cname, None)
-                if chandler:
-                    for c in chandler:
-                        c.removed = False
-                        session.add(c)
+            if current:
+                for cname in cls.CHILDREN_ATTRS:
+                    chandler = getattr(existing, cname, None)
+                    if chandler:
+                        for c in chandler:
+                            c.removed = False
+                            session.add(c)
 
         cls._post_payload(existing, payload, s, client, storage)
 
@@ -244,7 +251,7 @@ class Form(BaseResource):
         for f in payload['elements']:
             f['form_id'] = instance.id
             f['id'] = f['key']
-            Field.from_payload(f, session, client, storage)
+            Field.from_payload(f, session, client, storage, reset_removed=True)
 
         return
 

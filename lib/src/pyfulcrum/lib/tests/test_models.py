@@ -14,7 +14,9 @@ class ModelsTestCase(BaseTestCase):
         self.assertEqual(len(self.api_manager.get_projects()), 1)
         self.assertEqual(len(list(self.api_manager.projects.list())), 1)
         projects = self.api_manager.projects.list(cached=False)
-        self.assertEqual(len(list(projects)), 2)
+        # this should return only one project, because api returned 1, and
+        # one existing should be removed
+        self.assertEqual(len(list(projects)), 1)
 
         # generator flag will return iterable which will return live resutls only
         # ommiting ones from db

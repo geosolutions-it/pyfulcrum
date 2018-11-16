@@ -130,12 +130,14 @@ class List(_BaseCommand):
             mgr = api.get_manager(parsed_args.resource[0])
             url_params = {}
             for un, uv in (parsed_args.urlparams or []):
+                # disallow overriding paging arguments
                 url_params[un] = uv
             items = mgr.list(cached=parsed_args.cached,
                              generator=True,
                              ignore_existing=parsed_args.ignore_existing,
                              url_params=url_params,
-                             flush=True)
+                             flush=True,
+                             sync_removed=True)
             output = api.as_format(format, items, multiple=True)
             self.write_output(output)
 
@@ -149,6 +151,12 @@ class Get(_BaseCommand):
                             type=str,
                             nargs=1,
                             help="ID of resource to get")
+
+        parser.add_argument('--restore-removed',
+                            action='store_true',
+                            dest='restore_removed',
+                            default=False,
+                            help="Allow to locally restore removed resource")
         return parser
 
     def take_action(self, parsed_args):
@@ -156,7 +164,7 @@ class Get(_BaseCommand):
         with self.app.api_manager as api:
             mgr = api.get_manager(parsed_args.resource[0])
             obj_id = parsed_args.id[0]
-            item = mgr.get(obj_id, cached=parsed_args.cached)
+            item = mgr.get(obj_id, cached=parsed_args.cached, if_removed=parsed_args.restore_removed)
             output = api.as_format(format, item)
             self.write_output(output)
 

@@ -19,6 +19,18 @@ contains:
 
  see [PyFulcrum-web](web/README.md) for details
 
+## Data synchronization
+
+While `PyFulcrum-web` provides webhook receiver, Fulcrum may not dispatch event for any reason. To have local data aligned, it's advised to set up cron job that will synchronize forms/records according to regular schedule. Sample crontab entries:
+
+```
+FULCRUMBIN=/pat/to/venv/bin/pyfulcrum --dburl=... --apikey=... --storage=...
+
+1 * * * * $FULCRUMBIN list forms
+2 * * * * $FULCRUMBIN list records
+
+```
+
 ## Testing
 
 Both packages contain test suite. Recommended way is to run those tests with `pytest`. Full installation procedure for test environment is:
