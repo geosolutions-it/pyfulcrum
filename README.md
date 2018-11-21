@@ -51,8 +51,14 @@ Both packages contain test suite. Recommended way is to run those tests with `py
     psql -U pyfulcrum -d pyfulcrum_test -c 'create extension postgis;'
     ```
 
-1. Run tests with `TEST_DB_URL` env variable pointing to test database. Adjust variable contents to your deployment. `--cov` switch will generate code coverage statistics:
+1. Run tests with `TEST_DB_URL` env variable pointing to test database. Adjust variable contents to your deployment. `--cov` switch will generate code coverage statistics for both `web` and `lib`:
 
     ```
     TEST_DB_URL=postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum_test venv/bin/pytest --cov=pyfulcrum.lib --cov=pyfulcrum.web
+    ```
+
+To run tests for specific package, you can point to code path (assuming you're running tests in root directory of repository):
+
+    ```
+    TEST_DB_URL=postgresql://pyfulcrum:pyfulcrum@localhost/pyfulcrum_test venv/bin/pytest lib/
     ```

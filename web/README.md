@@ -199,7 +199,6 @@ Response, if any json is used, usually comes within following envelope:
 
 With exception for `GeoJSON`, which will return items as `features` key.
 
-
 ##### Examples:
 
 * retrive list of forms as Fulcrum API payload:

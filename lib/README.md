@@ -294,14 +294,15 @@ Sample invocations:
 
 Below is a list of resources and accepted url params:
 
- Resource type | URL params | Meaning 
- --- | --- | --- 
- `forms` | `form_id` | filter list to show only form with specific id. equivalent of `get` command 
- `records` | `form_id` | Get records only ones related to specific form 
- | | `created_before` |  Return records that were created before specific timestamp 
- | | `created_since` | Returns records that were created from timestamp to now 
- | | `updated_before` | Returns records updated before specific timestamp 
- | | `updated_since` | Returns records updated after specific timestamp 
+ Resource type | URL params | Meaning | Notes
+ --- | --- | --- | ---
+ `forms` | `form_id` | filter list to show only form with specific id. equivalent of `get` command | This is supported only if `--cached` is used.
+ `records` | `form_id` | Get records only ones related to specific form |
+ | | `record_id` |  Return records that were created before specific timestamp | This is supported only if `--cached` is used.
+ | | `created_before` |  Return records that were created before specific timestamp |
+ | | `created_since` | Returns records that were created from timestamp to now |
+ | | `updated_before` | Returns records updated before specific timestamp |
+ | | `updated_since` | Returns records updated after specific timestamp |
 
 
 For timestamps, suggested timestamp format is `YYYYMMDDTHH:MM:SS+TZTZ`, for example: `2018-11-09T12:05:06+0100`.
@@ -344,7 +345,7 @@ $ ./runfulcrum.sh get records b3d2e4dc-545c-4ebd-a53a-a6be7bad0dfb --cached --fo
 #### Remove:
 
 ```
-usage: pyfulcrum remove [-h] [--cached] resource id
+usage: pyfulcrum remove [-h] resource id
 
 Removes resource from local data (this doesn't update state in Fulcrum API)
 
@@ -361,13 +362,42 @@ Sample invocations:
 ./runfulcrum.sh remove records 29ac7df1-69e8-4227-bb1c-9040196d3d4c
 ```
 
-**Note**: Remove command will change only local state. It will not remove any data with Fulcrum API. If a resource is removed, all children resorces are also removed. For example, if you remove specific form, all records will be marked as removed as well, and won't be shown in list/get command.
+**Note**: Remove command will change only local state. It will not remove any data with Fulcrum API. If a resource is removed, all children resorces are also removed. For example, if you remove specific form, all records will be marked as removed as well, and won't be shown in list/get command. Because of that, `--cached` switch is ignored for this command.
 
 **Note**: Physical media files (original, thumbs) that are connected to any media resource are not removed when parent resource (Form, Record, Value) is marked as removed.
 
 **Note**: If operator or webhook will try to update resource which parent is marked as removed, error message will be returned instead.
 To perform restore of removed objects, most parent object (usually a form) must be restored with `list` or `get` command.
 
+
+#### List Removed
+
+```
+usage: pyfulcrum listremoved [-h] [--cached]
+                             [--urlparams URLPARAMS [URLPARAMS ...]]
+                             resource
+
+List locally removed resources
+
+positional arguments:
+  resource              Name of resource to list (projects, forms, records,
+                        photos, videos, audio, signatures)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --urlparams URLPARAMS [URLPARAMS ...]
+                        list of name=value pairs of url params to pass to list
+```
+
+Sample invocations:
+
+ * list removed records
+
+```
+./runfulcrum.sh listremoved records
+```
+
+**Note**: List removed command shows only resources locally removed. It will not list removed data from Fulcrum API directly. Because of that, `--cached` switch is ignored for this command.
 
 ##### Removal workflow:
 
