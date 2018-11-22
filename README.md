@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/geosolutions-it/pyfulcrum.svg?branch=master)](https://travis-ci.org/geosolutions-it/pyfulcrum)
+[![Code Coverage](https://codecov.io/github/geosolutions-it/pyfulcrum/coverage.svg?branch=master)](https://codecov.io/github/geosolutions-it/pyfulcrum?branch=master)
+
 # pyfulcrum
 
 Python packages for Fulcrum Webhooks and Fulcrum forms backup.
