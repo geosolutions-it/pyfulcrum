@@ -67,12 +67,12 @@ def list_resources(resource_name):
         format = FormatConverter.to_python(request.args.get('format'))
     except ValidationError:
         format = 'json'
-    is_spatial = resource_name in ('kml', 'geojson', 'shp', 'shapefile',) 
+    is_spatial = resource_name in ('records', 'photos',) and format in ('kml', 'geojson', 'shp', 'shapefile',)
     with api_manager:
         res = api_manager.get_manager(resource_name)
         if not res:
             abort(Response("Resource not found: {}".format(resource_name), status=404))
-        url_params = request.args
+        url_params = request.args.to_dict()
         page = int(url_params.get('page') or 0)
         per_page = int(url_params.get('per_page') or PER_PAGE)
         q = res.list(cached=True,
