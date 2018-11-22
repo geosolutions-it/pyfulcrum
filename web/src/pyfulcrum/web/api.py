@@ -67,7 +67,7 @@ def list_resources(resource_name):
         format = FormatConverter.to_python(request.args.get('format'))
     except ValidationError:
         format = 'json'
-    is_spatial = resource_name in ('kml', 'geojson', 'shp', 'shapefile',) 
+    is_spatial = resource_name in ('records', 'photos',) and format in ('kml', 'geojson', 'shp', 'shapefile',)
     with api_manager:
         res = api_manager.get_manager(resource_name)
         if not res:

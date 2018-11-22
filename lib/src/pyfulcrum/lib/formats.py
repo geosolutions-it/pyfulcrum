@@ -15,7 +15,7 @@ from osgeo import ogr, osr
 from io import StringIO
 ogr.UseExceptions()
 
-print_attrs = ('id', 'status', 'name', 'media_type', 'content_type', 'form_id', 'record_id', 'records_count', 'values_processed', 'created_at', 'updated_at',)
+print_attrs = ('id', 'status', 'name', 'media_type', 'content_type', 'form_id', 'project_id', 'record_id', 'records_count', 'values_processed', 'created_at', 'updated_at',)
 
 
 def formatter(*allowed_classes):
