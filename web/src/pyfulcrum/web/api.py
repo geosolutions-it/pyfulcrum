@@ -72,7 +72,7 @@ def list_resources(resource_name):
         res = api_manager.get_manager(resource_name)
         if not res:
             abort(Response("Resource not found: {}".format(resource_name), status=404))
-        url_params = request.args
+        url_params = request.args.to_dict()
         page = int(url_params.get('page') or 0)
         per_page = int(url_params.get('per_page') or PER_PAGE)
         q = res.list(cached=True,
