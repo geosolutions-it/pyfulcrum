@@ -1,0 +1,11 @@
+{"photo": 
+    {"created_by": "Thomas Kraft",
+     "created_by_id": "4f5e0955-b857-40fc-b1a8-985daf369759", "updated_by": "Thomas Kraft", "updated_by_id": "4f5e0955-b857-40fc-b1a8-985daf369759",
+     "thumbnail": "",
+     "large": "",
+     "original": "",
+     "access_key": "622997aa-929f-4758-bd86-859cc7435e3f",
+     "created_at": "2018-10-23T16:50:02Z", "updated_at": "2018-10-23T17:32:06Z", "uploaded": true, "stored": true, "processed": true, "deleted_at": null,
+     "record_id": "4e1c33ad-5496-4818-826f-504e66239b4d",
+     "form_id": "7a0c3378-b63a-4707-b459-df499698f23c",
+     "file_size": 241096, "content_type": "image/jpeg", "latitude": 41.4226888888889, "longitude": -81.4179583333333, "url": "https://api.fulcrumapp.com/api/v2/photos/622997aa-929f-4758-bd86-859cc7435e3f", "exif": {"make": "Apple", "model": "iPad2,3", "x_resolution": 72.0, "y_resolution": 72.0, "software": "iOS 8.1.2, Fulcrum 2.8.1 (2310)", "date_time": "2015-04-27T12:42:23.000+00:00", "exposure_time": 0.0043859649122807, "f_number": 2.4, "exposure_program": 2, "iso_speed_ratings": 40, "date_time_original": "2015-04-27T12:42:23.000+00:00", "date_time_digitized": "2015-04-27T12:42:23.000+00:00", "shutter_speed_value": 0.0043859649122807, "aperture_value": 2.4, "brightness_value": 7.24366812227074, "exposure_bias_value": 0.0, "metering_mode": 5, "flash": 32, "focal_length": 2.03, "color_space": 1, "pixel_x_dimension": 720, "pixel_y_dimension": 960, "sensing_method": 2, "exposure_mode": 0, "white_balance": 0, "focal_length_in_35mm_film": 44, "gps_latitude_ref": "N", "gps_latitude": 41.4226888888889, "gps_longitude_ref": "W", "gps_longitude": -81.4179583333333, "gps_altitude": 257.0, "gps_time_stamp": [16.0, 42.0, 24.2], "gps_dop": 5.0, "gps_img_direction_ref": "T", "gps_img_direction": 170.847682119205, "gps_date_stamp": "2015:04:27"}}}

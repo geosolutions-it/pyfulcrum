@@ -1,0 +1,42 @@
+{
+  "record": {
+    "status": "Red",
+    "version": 1,
+    "id": "4e1c33ad-5496-4818-826f-504e66239b4d",
+    "created_at": "2015-05-30T15:47:19Z",
+    "updated_at": "2015-05-30T15:47:19Z",
+    "client_created_at": "2015-05-30T14:47:13Z",
+    "client_updated_at": "2015-05-30T14:47:58Z",
+    "created_by": "Bryan McBride",
+    "created_by_id": "50633f84a934480d260001db",
+    "updated_by": "Bryan McBride",
+    "updated_by_id": "50633f84a934480d260001db",
+    "form_id": "7a0c3378-b63a-4707-b459-df499698f23c",
+    "project_id": null,
+    "assigned_to": null,
+    "assigned_to_id": null,
+    "form_values": {
+      "8373": {
+        "choice_values": ["Pillar"],
+        "other_values": []
+      },
+      "2832": "183",
+      "57c9": "4",
+      "193f": [{
+        "photo_id": "622997aa-929f-4758-bd86-859cc7435e3f",
+        "caption": null
+      }],
+      "11f8": {
+        "choice_values": ["Green Space"],
+        "other_values": []
+      }
+    },
+    "latitude": 42.8208336,
+    "longitude": -73.8936123,
+    "altitude": 98.0,
+    "speed": null,
+    "course": 170.0,
+    "horizontal_accuracy": 3.9,
+    "vertical_accuracy": null
+  }
+}
