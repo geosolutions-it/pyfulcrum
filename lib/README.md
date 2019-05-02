@@ -310,7 +310,7 @@ For timestamps, suggested timestamp format is `YYYYMMDDTHH:MM:SS+TZTZ`, for exam
 #### Get:
 
 ```
-usage: pyfulcrum get [-h] [--cached] resource id
+usage: pyfulcrum get [-h] [--cached] [--restore-removed] resource id
 
 Shows single resource
 
@@ -318,10 +318,11 @@ positional arguments:
   resource    Name of resource to list (projects, forms, records, values,
               media)
   id          ID of resource to get
-
+ 
 optional arguments:
-  -h, --help  show this help message and exit
-  --cached    Should app fetch data from live API
+  -h, --help          show this help message and exit
+  --cached            Should app fetch data from live API
+  --restore-removed   Allow to **locally** restore removed resource
 
 ```
 
@@ -438,7 +439,7 @@ Cannot restore Record(3faa8067-ca0d-4ded-b502-949bde4fb64c): parent Form(d701ed8
 If situation as above, to restore form and records, you just need to restore parent form:
 
 ```
-./runfulcrum.sh get forms d701ed81-9de8-41ed-bc51-38d0a375a4c1 --format str
+./runfulcrum.sh get forms d701ed81-9de8-41ed-bc51-38d0a375a4c1 --format str --restore-removed
 ```
 
 Then you'll be able to update specific records as well.
